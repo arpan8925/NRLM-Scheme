@@ -75,8 +75,30 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="form-section">
+                <h3>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                    </svg>
+                    User Account For -
+                </h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="department">Select Account Role *</label>
+                        <select name="role" id="role" required>
+                            <option value="" selected>Select a Role</option>
+                            <option value="admin">Admin</option>
+                            <option value="block_employee">Block Level Employee</option>
+                            <option value="district_employee">District Level Employee</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employment Details (Hidden by Default) -->
+            <div class="form-section" id="employment-details" style="display: none;">
                 <h3>
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
@@ -84,29 +106,41 @@
                     </svg>
                     Employment Details
                 </h3>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="employee_id">Employee ID*</label>
-                        <input type="text" id="employee_id" name="employee_id" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="position">Position*</label>
-                        <input type="text" id="position" name="position" required>
-                    </div>
-                </div>
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="department">Department*</label>
-                        <input type="text" id="department" name="department" required>
+                        <label for="state">Select State *</label>
+                        <select name="state" id="state">
+                            <option value="" selected>Select a State</option>
+                            <option value="2">ANDHRA PRADESH (AP)</option>
+                            <option value="3">ARUNACHAL PRADESH (AR)</option>
+                            <option value="4">ASSAM (AS)</option>
+                            <option value="5">BIHAR (BH)</option>
+                        </select>
                     </div>
                     <div class="form-group">
-                        <label for="hire_date">Hire Date</label>
-                        <input type="date" id="hire_date" name="hire_date">
+                        <label for="district">Select District *</label>
+                        <select name="district" id="district">
+                            <option value="" selected>Select a District</option>
+                            <option value="10002">SOUTH GOA (SG)</option>
+                            <option value="10001">NORTH GOA (NG)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row" id="district-employee-details">
+                    <div class="form-group">
+                        <label for="block">Select Block *</label>
+                        <select name="block" id="block">
+                            <option value="" selected>Select a Block</option>
+                            <option value="100006">CANACONA</option>
+                            <option value="100008">MORMUGAO</option>
+                            <option value="100009">PONDA</option>
+                        </select>
                     </div>
                 </div>
             </div>
-            
+
             <div class="form-actions">
                 <button type="submit" class="btn-create">Create Employee</button>
                 <a href="{% url 'managerdashboard:employee_list' %}" class="btn-cancel">Cancel</a>
@@ -114,4 +148,25 @@
         </form>
     </div>
 </div>
-{% endblock %} 
+
+
+
+<script>
+    document.getElementById('role').addEventListener('change', function() {
+        var role = this.value;
+        var employmentDetails = document.getElementById('employment-details');
+        var districtEmployeeDetails = document.getElementById('district-employee-details');
+        
+        if (role === 'admin') {
+            employmentDetails.style.display = 'none'; // Hide Employment Details for Admin
+        } else if (role === 'block_employee') {
+            employmentDetails.style.display = 'block';
+            districtEmployeeDetails.style.display = 'block'; // Show Employment Details for Block Level Employee
+        } else if (role === 'district_employee') {
+            employmentDetails.style.display = 'block';
+            districtEmployeeDetails.style.display = 'none';
+        }
+    });
+</script>
+
+{% endblock %}
