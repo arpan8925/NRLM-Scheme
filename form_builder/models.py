@@ -1,36 +1,39 @@
 from django.db import models
-from accounts.models import Manager
 from django.utils.text import slugify
+from django.conf import settings
 import uuid
+import json
 
 class Form(models.Model):
-    STATUS_CHOICES = (
-        ('draft', 'Draft'),
-        ('published', 'Published'),
-        ('archived', 'Archived'),
-        ('trash', 'Trash')
-    )
-
     title = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True, blank=True)
     description = models.TextField(blank=True)
-    creator = models.ForeignKey(Manager, on_delete=models.CASCADE, null=True)  # Allow null for superuser
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    slug = models.SlugField(unique=True, blank=True)
+    fields = models.TextField(default='[]')
+    is_published = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    is_template = models.BooleanField(default=False)
-    form_data = models.JSONField(default=dict)  # Store form structure
-    
+
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.title + "-" + str(uuid.uuid4())[:8])
+            self.slug = slugify(self.title)
         super().save(*args, **kwargs)
-    
-    def get_absolute_url(self):
-        return f"/form/{self.slug}"
-    
+
     def __str__(self):
         return self.title
 
+    def get_absolute_url(self):
+        return f"/form/{self.slug}"
+
     class Meta:
         ordering = ['-created_at']
+
+class FormSubmission(models.Model):
+    form = models.ForeignKey(Form, on_delete=models.CASCADE, related_name='submissions')
+    responses = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def get_responses(self):
+        return json.loads(self.responses)
+
+    def __str__(self):
+        return f"Submission for {self.form.title} at {self.created_at}"

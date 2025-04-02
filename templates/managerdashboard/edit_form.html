@@ -1,0 +1,715 @@
+{% extends 'managerdashboard/dashboard.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/form-builder.css' %}">
+<style>
+    .form-builder-container {
+        display: grid;
+        grid-template-columns: 200px 1fr 300px;
+        gap: 1rem;
+        padding: 1.5rem;
+        height: calc(100vh - 64px); /* Adjust based on your header height */
+        background: #111827;
+    }
+
+    /* Left Sidebar - Field Types */
+    .field-selector {
+        background: #1F2937;
+        border-radius: 8px;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        height: fit-content;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .add-field {
+        background: #374151;
+        color: #E5E7EB;
+        border: 1px solid #4B5563;
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        text-align: left;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .add-field:hover {
+        background: #4B5563;
+        border-color: #60A5FA;
+    }
+
+    /* Main Content - Form Canvas */
+    .form-content {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        max-width: 800px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    .form-header {
+        background: #1F2937;
+        border-radius: 8px;
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-title-input {
+        background: #374151;
+        border: 1px solid #4B5563;
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        color: #E5E7EB;
+        font-size: 1.125rem;
+        width: 300px;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-preview, .btn-save, .btn-publish {
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-preview {
+        background: #374151;
+        color: #E5E7EB;
+        border: 1px solid #4B5563;
+    }
+
+    .btn-save {
+        background: #2563EB;
+        color: white;
+        border: none;
+    }
+
+    .btn-publish {
+        background: #059669;
+        color: white;
+        border: none;
+    }
+
+    .form-canvas {
+        background: #1F2937;
+        border-radius: 8px;
+        padding: 1.5rem;
+        min-height: 400px;
+        flex-grow: 1;
+        overflow-y: auto;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Right Sidebar - Field Settings */
+    .field-settings {
+        background: #1F2937;
+        border-radius: 8px;
+        padding: 1rem;
+        height: fit-content;
+        position: sticky;
+        top: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .field-settings h3 {
+        color: #E5E7EB;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #374151;
+    }
+
+    .setting {
+        margin-bottom: 1rem;
+    }
+
+    .setting label {
+        display: block;
+        color: #9CA3AF;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .setting input[type="text"] {
+        width: 100%;
+        background: #374151;
+        border: 1px solid #4B5563;
+        border-radius: 4px;
+        padding: 0.5rem;
+        color: #E5E7EB;
+    }
+
+    .setting input[type="checkbox"] {
+        accent-color: #2563EB;
+    }
+
+    /* Form Fields Styling */
+    .form-field {
+        background: #374151;
+        border: 1px solid #4B5563;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s;
+    }
+
+    .form-field:hover {
+        border-color: #60A5FA;
+    }
+
+    .field-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .field-label {
+        color: #E5E7EB;
+        font-weight: 500;
+    }
+
+    .field-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .required-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #9CA3AF;
+        font-size: 0.875rem;
+    }
+
+    .field-preview {
+        background: #1F2937;
+        border-radius: 4px;
+        padding: 1rem;
+    }
+
+    .field-preview-input {
+        width: 100%;
+        background: #374151;
+        border: 1px solid #4B5563;
+        border-radius: 4px;
+        padding: 0.75rem;
+        color: #E5E7EB;
+    }
+
+    /* Options List Styling */
+    .options-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .option-item {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .option-input {
+        flex-grow: 1;
+    }
+
+    .remove-option {
+        background: #EF4444;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+    }
+
+    .add-option {
+        background: #374151;
+        color: #E5E7EB;
+        border: 1px dashed #4B5563;
+        border-radius: 4px;
+        padding: 0.5rem;
+        width: 100%;
+        cursor: pointer;
+    }
+
+    /* Notification Styling */
+    .notification {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        padding: 1rem 1.5rem;
+        border-radius: 6px;
+        color: white;
+        animation: slideIn 0.3s ease;
+        z-index: 1000;
+    }
+
+    .notification.success {
+        background: #059669;
+    }
+
+    .notification.error {
+        background: #DC2626;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="form-builder-container">
+    <!-- Left Sidebar - Field Types -->
+    <div class="field-selector">
+        <button class="add-field" data-type="text">
+            <i class="fas fa-font"></i> Text Input
+        </button>
+        <button class="add-field" data-type="textarea">
+            <i class="fas fa-paragraph"></i> Text Area
+        </button>
+        <button class="add-field" data-type="select">
+            <i class="fas fa-caret-square-down"></i> Dropdown
+        </button>
+        <button class="add-field" data-type="radio">
+            <i class="fas fa-dot-circle"></i> Radio Group
+        </button>
+        <button class="add-field" data-type="checkbox">
+            <i class="fas fa-check-square"></i> Checkbox Group
+        </button>
+        <button class="add-field" data-type="email">
+            <i class="fas fa-envelope"></i> Email
+        </button>
+        <button class="add-field" data-type="phone">
+            <i class="fas fa-phone"></i> Phone
+        </button>
+        <button class="add-field" data-type="name">
+            <i class="fas fa-user"></i> Name
+        </button>
+        <button class="add-field" data-type="address">
+            <i class="fas fa-map-marker-alt"></i> Address
+        </button>
+    </div>
+
+    <!-- Main Content - Form Canvas -->
+    <div class="form-content">
+        <!-- Form Header -->
+        <div class="form-header">
+            <input type="text" id="formTitle" class="form-title-input" value="{{ form.title }}" placeholder="Enter Form Title">
+            <div class="form-actions">
+                <button class="btn-preview">Preview</button>
+                <button class="btn-save">Save Changes</button>
+                {% if not form.is_published %}
+                <button class="btn-publish">Publish</button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Form Canvas -->
+        <div id="formCanvas" class="form-canvas">
+            <!-- Form fields will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Right Sidebar - Field Settings -->
+    <div id="fieldSettings" class="field-settings">
+        <h3>Field Settings</h3>
+        <div class="settings-content">
+            <!-- Settings will be dynamically loaded here -->
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize form with existing data
+document.addEventListener('DOMContentLoaded', function() {
+    const formData = {
+        title: "{{ form.title }}",
+        fields: {{ form_fields|safe }}
+    };
+    
+    // Set form title
+    document.getElementById('formTitle').value = formData.title;
+    
+    // Load existing fields
+    const formCanvas = document.getElementById('formCanvas');
+    formData.fields.forEach(field => {
+        const fieldElement = createFormField(field);
+        formCanvas.appendChild(fieldElement);
+    });
+    
+    // Initialize field type buttons
+    document.querySelectorAll('.add-field').forEach(button => {
+        button.addEventListener('click', function() {
+            const fieldType = this.dataset.type;
+            const field = {
+                type: fieldType,
+                label: `New ${fieldType} Field`,
+                required: false,
+                placeholder: '',
+                options: ['Option 1', 'Option 2', 'Option 3']
+            };
+            const fieldElement = createFormField(field);
+            formCanvas.appendChild(fieldElement);
+            showFieldSettings(fieldElement);
+        });
+    });
+    
+    // Add event listeners for buttons
+    document.querySelector('.btn-save').addEventListener('click', function() {
+        saveForm("{{ form.slug }}");
+    });
+    
+    document.querySelector('.btn-publish').addEventListener('click', function() {
+        if (confirm('Are you sure you want to publish this form? This action cannot be undone.')) {
+            window.location.href = "{% url 'managerdashboard:publish_form' form.slug %}";
+        }
+    });
+    
+    document.querySelector('.btn-preview').addEventListener('click', function() {
+        previewForm();
+    });
+});
+
+// Function to save form changes
+function saveForm(slug) {
+    const formData = {
+        title: document.getElementById('formTitle').value,
+        fields: collectFormFields()
+    };
+    
+    fetch("{% url 'managerdashboard:update_form' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            slug: slug,
+            ...formData
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Form saved successfully!', 'success');
+            setTimeout(() => {
+                window.location.href = data.redirect_url;
+            }, 1500);
+        } else {
+            showNotification(data.error || 'Error saving form', 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Error saving form: ' + error.message, 'error');
+    });
+}
+
+// Function to collect form fields
+function collectFormFields() {
+    const fields = [];
+    const fieldElements = document.querySelectorAll('.form-field');
+    
+    fieldElements.forEach(fieldElement => {
+        const field = {
+            type: fieldElement.dataset.type,
+            label: fieldElement.querySelector('.field-label').textContent,
+            required: fieldElement.querySelector('.required-toggle').checked,
+            placeholder: fieldElement.querySelector('.field-preview-input')?.placeholder || ''
+        };
+        
+        if (['select', 'radio', 'checkbox'].includes(field.type)) {
+            const options = Array.from(fieldElement.querySelectorAll('.option-input'))
+                .map(input => input.value)
+                .filter(value => value.trim() !== '');
+            field.options = options;
+        }
+        
+        fields.push(field);
+    });
+    
+    return fields;
+}
+
+// Function to show notifications
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Function to create a form field element
+function createFormField(field) {
+    const fieldElement = document.createElement('div');
+    fieldElement.className = 'form-field';
+    fieldElement.dataset.type = field.type;
+    
+    // Create field header
+    const fieldHeader = document.createElement('div');
+    fieldHeader.className = 'field-header';
+    fieldHeader.innerHTML = `
+        <span class="field-label">${field.label}</span>
+        <div class="field-controls">
+            <label class="required-label">
+                Required
+                <input type="checkbox" class="required-toggle" ${field.required ? 'checked' : ''}>
+            </label>
+            <button class="edit-field">Edit</button>
+            <button class="delete-field">Delete</button>
+        </div>
+    `;
+    
+    // Create field preview
+    const fieldPreview = document.createElement('div');
+    fieldPreview.className = 'field-preview';
+    
+    switch (field.type) {
+        case 'text':
+        case 'email':
+        case 'phone':
+        case 'name':
+            fieldPreview.innerHTML = `
+                <input type="${field.type}" class="field-preview-input" placeholder="${field.placeholder || ''}" disabled>
+            `;
+            break;
+        case 'textarea':
+        case 'address':
+            fieldPreview.innerHTML = `
+                <textarea class="field-preview-input" placeholder="${field.placeholder || ''}" disabled></textarea>
+            `;
+            break;
+        case 'select':
+            fieldPreview.innerHTML = `
+                <select class="field-preview-input" disabled>
+                    ${(field.options || []).map(option => `<option>${option}</option>`).join('')}
+                </select>
+            `;
+            break;
+        case 'radio':
+            fieldPreview.innerHTML = `
+                <div class="radio-group">
+                    ${(field.options || []).map(option => `
+                        <label class="radio-option">
+                            <input type="radio" name="preview_${field.label}" disabled>
+                            ${option}
+                        </label>
+                    `).join('')}
+                </div>
+            `;
+            break;
+        case 'checkbox':
+            fieldPreview.innerHTML = `
+                <div class="checkbox-group">
+                    ${(field.options || []).map(option => `
+                        <label class="checkbox-option">
+                            <input type="checkbox" disabled>
+                            ${option}
+                        </label>
+                    `).join('')}
+                </div>
+            `;
+            break;
+    }
+    
+    fieldElement.appendChild(fieldHeader);
+    fieldElement.appendChild(fieldPreview);
+    
+    // Add event listeners
+    fieldElement.querySelector('.edit-field').addEventListener('click', () => {
+        showFieldSettings(fieldElement);
+    });
+    
+    fieldElement.querySelector('.delete-field').addEventListener('click', () => {
+        if (confirm('Are you sure you want to delete this field?')) {
+            fieldElement.remove();
+        }
+    });
+    
+    return fieldElement;
+}
+
+// Function to show field settings
+function showFieldSettings(fieldElement) {
+    const settingsPanel = document.getElementById('fieldSettings');
+    const settingsContent = settingsPanel.querySelector('.settings-content');
+    const field = {
+        type: fieldElement.dataset.type,
+        label: fieldElement.querySelector('.field-label').textContent,
+        required: fieldElement.querySelector('.required-toggle').checked,
+        placeholder: fieldElement.querySelector('.field-preview-input')?.placeholder || '',
+        options: Array.from(fieldElement.querySelectorAll('.radio-option, .checkbox-option, option'))
+            .map(el => el.textContent.trim())
+    };
+    
+    let settingsHTML = `
+        <div class="setting">
+            <label>Label</label>
+            <input type="text" class="setting-label" value="${field.label}">
+        </div>
+        <div class="setting">
+            <label>Required</label>
+            <input type="checkbox" class="setting-required" ${field.required ? 'checked' : ''}>
+        </div>
+    `;
+    
+    if (['text', 'email', 'phone', 'name', 'textarea', 'address'].includes(field.type)) {
+        settingsHTML += `
+            <div class="setting">
+                <label>Placeholder</label>
+                <input type="text" class="setting-placeholder" value="${field.placeholder}">
+            </div>
+        `;
+    }
+    
+    if (['select', 'radio', 'checkbox'].includes(field.type)) {
+        settingsHTML += `
+            <div class="setting">
+                <label>Options</label>
+                <div class="options-list">
+                    ${field.options.map(option => `
+                        <div class="option-item">
+                            <input type="text" class="option-input" value="${option}">
+                            <button class="remove-option">×</button>
+                        </div>
+                    `).join('')}
+                </div>
+                <button class="add-option">Add Option</button>
+            </div>
+        `;
+    }
+    
+    settingsContent.innerHTML = settingsHTML;
+    
+    // Add event listeners for settings
+    const labelInput = settingsContent.querySelector('.setting-label');
+    if (labelInput) {
+        labelInput.addEventListener('input', () => {
+            fieldElement.querySelector('.field-label').textContent = labelInput.value;
+        });
+    }
+    
+    const requiredToggle = settingsContent.querySelector('.setting-required');
+    if (requiredToggle) {
+        requiredToggle.addEventListener('change', () => {
+            fieldElement.querySelector('.required-toggle').checked = requiredToggle.checked;
+        });
+    }
+    
+    const placeholderInput = settingsContent.querySelector('.setting-placeholder');
+    if (placeholderInput) {
+        placeholderInput.addEventListener('input', () => {
+            const preview = fieldElement.querySelector('.field-preview-input');
+            if (preview) {
+                preview.placeholder = placeholderInput.value;
+            }
+        });
+    }
+    
+    const addOptionBtn = settingsContent.querySelector('.add-option');
+    if (addOptionBtn) {
+        addOptionBtn.addEventListener('click', () => {
+            const optionsList = settingsContent.querySelector('.options-list');
+            const newOption = document.createElement('div');
+            newOption.className = 'option-item';
+            newOption.innerHTML = `
+                <input type="text" class="option-input" value="New Option">
+                <button class="remove-option">×</button>
+            `;
+            optionsList.appendChild(newOption);
+            updateFieldOptions(fieldElement, settingsContent);
+        });
+    }
+    
+    settingsContent.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-option')) {
+            e.target.parentElement.remove();
+            updateFieldOptions(fieldElement, settingsContent);
+        }
+    });
+    
+    settingsContent.addEventListener('input', (e) => {
+        if (e.target.classList.contains('option-input')) {
+            updateFieldOptions(fieldElement, settingsContent);
+        }
+    });
+}
+
+// Function to update field options
+function updateFieldOptions(fieldElement, settingsContent) {
+    const options = Array.from(settingsContent.querySelectorAll('.option-input'))
+        .map(input => input.value)
+        .filter(value => value.trim() !== '');
+    
+    const preview = fieldElement.querySelector('.field-preview');
+    const fieldType = fieldElement.dataset.type;
+    
+    switch (fieldType) {
+        case 'select':
+            preview.innerHTML = `
+                <select class="field-preview-input" disabled>
+                    ${options.map(option => `<option>${option}</option>`).join('')}
+                </select>
+            `;
+            break;
+        case 'radio':
+            preview.innerHTML = `
+                <div class="radio-group">
+                    ${options.map(option => `
+                        <label class="radio-option">
+                            <input type="radio" name="preview_${fieldElement.querySelector('.field-label').textContent}" disabled>
+                            ${option}
+                        </label>
+                    `).join('')}
+                </div>
+            `;
+            break;
+        case 'checkbox':
+            preview.innerHTML = `
+                <div class="checkbox-group">
+                    ${options.map(option => `
+                        <label class="checkbox-option">
+                            <input type="checkbox" disabled>
+                            ${option}
+                        </label>
+                    `).join('')}
+                </div>
+            `;
+            break;
+    }
+}
+</script>
+
+{% block extra_js %}
+<script src="{% static 'js/form-builder.js' %}"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock %}
+{% endblock %} 

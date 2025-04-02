@@ -3,19 +3,28 @@
 
 {% block main_content %}
 <div class="forms-container">
+    <!-- Messages Section -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="page-header">
         <h2>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-                <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
             Forms Management
         </h2>
-        <a href="{% url 'managerdashboard:create_form' %}" class="btn-add-form">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <a href="{% url 'managerdashboard:create_form' %}" class="btn-create-form">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
@@ -25,125 +34,315 @@
 
     <div class="forms-stats">
         <div class="stat-pill">
-            <span class="label">Published</span>
-            <span class="value">{{ published_count }}</span>
-        </div>
-        <div class="stat-pill">
-            <span class="label">Drafts</span>
-            <span class="value">{{ draft_count }}</span>
-        </div>
-        <div class="stat-pill">
-            <span class="label">Archived</span>
-            <span class="value">{{ archived_count }}</span>
-        </div>
-        <div class="stat-pill">
-            <span class="label">Trash</span>
-            <span class="value">{{ trash_count }}</span>
+            <span class="stat-value">{{ published_count }}</span>
+            <span class="stat-label">Published Forms</span>
         </div>
     </div>
 
-    <div class="forms-search">
-        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <input type="text" id="formSearch" placeholder="Search forms..." class="search-input">
+    <div class="forms-controls">
+        <div class="search-box">
+            <input type="text" id="formSearch" placeholder="Search forms...">
+            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+        </div>
+        <select id="statusFilter" class="status-filter">
+            <option value="all">All Forms</option>
+            <option value="published">Published</option>
+            <option value="draft">Drafts</option>
+        </select>
     </div>
 
-    {% if forms %}
-    <div class="forms-table-container">
-        <table class="forms-table">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Status</th>
-                    <th>Created</th>
-                    <th>Responses</th>
-                    <th>Live URL</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for form in forms %}
-                <tr class="form-row">
-                    <td>
-                        <div class="form-title">{{ form.title }}</div>
-                        <div class="form-description">{{ form.description|truncatechars:50 }}</div>
-                    </td>
-                    <td>
-                        <span class="status-badge status-{{ form.status }}">{{ form.status|title }}</span>
-                    </td>
-                    <td>{{ form.created_at|date:"M d, Y" }}</td>
-                    <td>0</td>
-                    <td>
-                        {% if form.status == 'published' %}
-                        <a href="{{ form.get_absolute_url }}" class="form-url" target="_blank">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                                <polyline points="15 3 21 3 21 9"></polyline>
-                                <line x1="10" y1="14" x2="21" y2="3"></line>
-                            </svg>
-                            View Live
-                        </a>
-                        {% else %}
-                        <span class="form-url-disabled">Not Published</span>
-                        {% endif %}
-                    </td>
-                    <td class="actions">
-                        <a href="{% url 'managerdashboard:edit_form' form.slug %}" class="btn-action btn-edit" title="Edit">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                        </a>
-                        <a href="{% url 'managerdashboard:duplicate_form' form.slug %}" class="btn-action btn-duplicate" title="Duplicate">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                            </svg>
-                        </a>
-                        <a href="#" onclick="confirmDelete('{% url 'managerdashboard:delete_form' form.slug %}')" class="btn-action btn-delete" title="Delete">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="forms-list">
+        {% for form in forms %}
+        <div class="form-item" data-status="{% if form.is_published %}published{% else %}draft{% endif %}">
+            <div class="form-item-main">
+                <div class="form-info">
+                    <h3 class="form-title">{{ form.title }}</h3>
+                    <span class="status-badge status-{% if form.is_published %}published{% else %}draft{% endif %}">
+                        {% if form.is_published %}Published{% else %}Draft{% endif %}
+                    </span>
+                </div>
+                <div class="form-meta">
+                    <span class="meta-item">Created {{ form.created_at|date:"M d, Y" }}</span>
+                    <span class="meta-item">{{ form.submissions.count }} responses</span>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <a href="{% url 'managerdashboard:edit_form' form.slug %}" class="action-btn" title="Edit">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </a>
+                {% if not form.is_published %}
+                <button class="action-btn publish-btn" onclick="confirmPublish('{% url 'managerdashboard:publish_form' form.slug %}')" title="Publish">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                        <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+                        <path d="M2 2l7.586 7.586"></path>
+                        <circle cx="11" cy="11" r="2"></circle>
+                    </svg>
+                </button>
+                {% endif %}
+                {% if form.is_published %}
+                <a href="{% url 'form_builder:view_form' form.slug %}" target="_blank" class="action-btn" title="View Live">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
+                </a>
+                {% endif %}
+                <button class="action-btn" onclick="confirmDelete('{% url 'managerdashboard:delete_form' form.slug %}')" title="Delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="no-forms">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <p>No forms created yet</p>
+            <a href="{% url 'managerdashboard:create_form' %}" class="btn-create">Create Your First Form</a>
+        </div>
+        {% endfor %}
     </div>
-    {% else %}
-    <div class="no-forms">
-        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-            <polyline points="10 9 9 9 8 9"></polyline>
-        </svg>
-        <p>No forms created yet</p>
-        <a href="{% url 'managerdashboard:create_form' %}" class="btn-first-form">Create Your First Form</a>
-    </div>
-    {% endif %}
 </div>
 
+<style>
+.forms-container {
+    padding: 2rem;
+    color: #E5E7EB;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.btn-create-form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #4F46E5;
+    color: white;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.forms-stats {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.stat-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 2rem;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    background: rgba(55, 65, 81, 0.3);
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #E5E7EB;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #9CA3AF;
+}
+
+.forms-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.search-box {
+    position: relative;
+    flex: 1;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    background: rgba(55, 65, 81, 0.3);
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    color: #E5E7EB;
+    font-size: 0.875rem;
+}
+
+.search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9CA3AF;
+}
+
+.status-filter {
+    padding: 0.75rem 1rem;
+    background: rgba(55, 65, 81, 0.3);
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    color: #E5E7EB;
+    font-size: 0.875rem;
+}
+
+.forms-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    background: rgba(55, 65, 81, 0.3);
+    transition: background-color 0.2s;
+}
+
+.form-item:hover {
+    background: rgba(55, 65, 81, 0.5);
+}
+
+.form-item-main {
+    flex: 1;
+}
+
+.form-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.form-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #E5E7EB;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-published { background: rgba(16, 185, 129, 0.2); color: #34D399; }
+.status-draft { background: rgba(245, 158, 11, 0.2); color: #FBBF24; }
+.status-archived { background: rgba(107, 114, 128, 0.2); color: #9CA3AF; }
+
+.form-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: #9CA3AF;
+}
+
+.form-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    padding: 0.5rem;
+    background: none;
+    border: none;
+    color: #9CA3AF;
+    cursor: pointer;
+    border-radius: 0.25rem;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #E5E7EB;
+}
+
+.no-forms {
+    text-align: center;
+    padding: 4rem 2rem;
+    border: 1px dashed #374151;
+    border-radius: 0.5rem;
+    color: #9CA3AF;
+}
+
+.btn-create {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: #4F46E5;
+    color: white;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.action-btn.publish-btn {
+    color: #059669;
+}
+
+.action-btn.publish-btn:hover {
+    background-color: #059669;
+    color: white;
+}
+</style>
+
 <script>
-    document.getElementById('formSearch').addEventListener('keyup', function() {
-        const searchValue = this.value.toLowerCase();
-        const rows = document.querySelectorAll('.form-row');
-        
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchValue) ? '' : 'none';
-        });
+// Search functionality
+document.getElementById('formSearch').addEventListener('input', function() {
+    const searchValue = this.value.toLowerCase();
+    document.querySelectorAll('.form-item').forEach(item => {
+        const title = item.querySelector('.form-title').textContent.toLowerCase();
+        item.style.display = title.includes(searchValue) ? '' : 'none';
     });
-    
-    function confirmDelete(deleteUrl) {
-        if (confirm('Are you sure you want to delete this form? This action cannot be undone.')) {
-            window.location.href = deleteUrl;
-        }
+});
+
+// Status filter
+document.getElementById('statusFilter').addEventListener('change', function() {
+    const status = this.value;
+    document.querySelectorAll('.form-item').forEach(item => {
+        item.style.display = (status === 'all' || item.dataset.status === status) ? '' : 'none';
+    });
+});
+
+// Delete confirmation
+function confirmDelete(deleteUrl) {
+    if (confirm('Are you sure you want to delete this form? This action cannot be undone.')) {
+        window.location.href = deleteUrl;
     }
+}
+
+function confirmPublish(url) {
+    if (confirm('Are you sure you want to publish this form? This action cannot be undone.')) {
+        window.location.href = url;
+    }
+}
 </script>
 {% endblock %} 

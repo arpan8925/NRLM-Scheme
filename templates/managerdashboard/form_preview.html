@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="preview-container">
+    {% if error %}
+        <div class="error-message">
+            {{ error }}
+        </div>
+    {% else %}
+        <div class="preview-header">
+            <h2>{{ form_data.title }}</h2>
+            <button onclick="window.close()" class="close-preview">Close Preview</button>
+        </div>
+        
+        <div class="preview-content">
+            <form id="previewForm" class="preview-form">
+                {% csrf_token %}
+                {% for field in form_data.fields %}
+                    <div class="preview-field">
+                        <label>
+                            {{ field.label }}
+                            {% if field.required %}
+                                <span class="required">*</span>
+                            {% endif %}
+                        </label>
+                        
+                        {% if field.type == 'text' %}
+                            <input type="text" 
+                                   name="{{ field.label }}" 
+                                   class="form-input"
+                                   {% if field.required %}required{% endif %}>
+                                   
+                        {% elif field.type == 'textarea' %}
+                            <textarea name="{{ field.label }}" 
+                                      class="form-textarea"
+                                      {% if field.required %}required{% endif %}></textarea>
+                                      
+                        {% elif field.type == 'select' %}
+                            <select name="{{ field.label }}" 
+                                    class="form-select"
+                                    {% if field.required %}required{% endif %}>
+                                <option value="">Select an option</option>
+                                {% for option in field.options %}
+                                    <option value="{{ option }}">{{ option }}</option>
+                                {% endfor %}
+                            </select>
+                            
+                        {% elif field.type == 'radio' %}
+                            <div class="radio-group">
+                                {% for option in field.options %}
+                                    <label class="radio-label">
+                                        <input type="radio" 
+                                               name="{{ field.label }}" 
+                                               value="{{ option }}"
+                                               {% if field.required %}required{% endif %}>
+                                        {{ option }}
+                                    </label>
+                                {% endfor %}
+                            </div>
+                            
+                        {% elif field.type == 'checkbox' %}
+                            <div class="checkbox-group">
+                                {% for option in field.options %}
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" 
+                                               name="{{ field.label }}[]" 
+                                               value="{{ option }}">
+                                        {{ option }}
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                
+                {% if preview_mode %}
+                    <div class="preview-actions">
+                        <button type="button" class="btn-close" onclick="window.close()">Close Preview</button>
+                    </div>
+                {% else %}
+                    <button type="submit" class="btn-submit">Submit Form</button>
+                {% endif %}
+            </form>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.preview-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #1a1a1a;
+    border-radius: 8px;
+    color: #e5e7eb;
+}
+
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #374151;
+}
+
+.preview-header h2 {
+    margin: 0;
+    color: #e5e7eb;
+}
+
+.preview-field {
+    margin-bottom: 1.5rem;
+}
+
+.preview-field label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #e5e7eb;
+}
+
+.required {
+    color: #ef4444;
+    margin-left: 0.25rem;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+    width: 100%;
+    padding: 0.75rem;
+    background: #374151;
+    border: 1px solid #4b5563;
+    border-radius: 4px;
+    color: #e5e7eb;
+}
+
+.radio-group,
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.radio-label,
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #e5e7eb;
+}
+
+.preview-actions {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.btn-close,
+.close-preview {
+    padding: 0.75rem 1.5rem;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-submit {
+    padding: 0.75rem 1.5rem;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.error-message {
+    padding: 1rem;
+    background: #fee2e2;
+    border: 1px solid #ef4444;
+    border-radius: 4px;
+    color: #dc2626;
+}
+</style>
+{% endblock %} 

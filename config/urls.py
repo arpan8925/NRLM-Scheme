@@ -26,6 +26,7 @@ urlpatterns = [
     path('', redirect_to_login, name='root'),
     path('admin/', admin.site.urls),
     path('login/', login_view, name='login'),
-    path('manager/', include('managerdashboard.urls')),
+    path('manager/', include('managerdashboard.urls', namespace='managerdashboard')),
     path('employee/', include('employeedashboard.urls')),
+    path('forms/', include('form_builder.urls', namespace='form_builder')),
 ]

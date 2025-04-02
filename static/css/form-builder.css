@@ -1,0 +1,438 @@
+/* Form Builder Layout */
+.form-builder-container {
+    display: grid;
+    grid-template-columns: 250px 1fr 300px;
+    gap: 1.5rem;
+    height: calc(100vh - 80px);
+    padding: 1.5rem;
+    background-color: #1a1f2e;
+    color: #e2e8f0;
+}
+
+/* Left Sidebar - Form Elements */
+.form-elements {
+    background: #242b3d;
+    border-radius: 12px;
+    padding: 1.25rem;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.form-elements h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #374151;
+}
+
+.element-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.element-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    background: #2d3648;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    cursor: grab;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.element-item:hover {
+    background: #3a4257;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.element-item svg {
+    width: 20px;
+    height: 20px;
+    color: #9ca3af;
+}
+
+.element-item span {
+    font-size: 0.9rem;
+    color: #e2e8f0;
+}
+
+/* Main Form Building Area */
+.form-building-area {
+    background: #242b3d;
+    border-radius: 12px;
+    padding: 1.5rem;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #374151;
+}
+
+.form-title-input {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid #374151;
+    padding: 0.5rem 0;
+    width: 50%;
+    transition: border-color 0.2s ease;
+}
+
+.form-title-input:focus {
+    outline: none;
+    border-color: #4f46e5;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn {
+    padding: 0.625rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-preview {
+    background: #2d3648;
+    color: #e2e8f0;
+    border: 1px solid #374151;
+}
+
+.btn-preview:hover {
+    background: #3a4257;
+}
+
+.btn-save {
+    background: #4f46e5;
+    color: white;
+    border: none;
+}
+
+.btn-save:hover {
+    background: #4338ca;
+    transform: translateY(-1px);
+}
+
+.btn-publish {
+    background: #059669;
+    color: white;
+    border: none;
+}
+
+.btn-publish:hover {
+    background: #047857;
+    transform: translateY(-1px);
+}
+
+/* Form Canvas */
+.form-canvas {
+    background: #1a1f2e;
+    border: 2px dashed #374151;
+    border-radius: 12px;
+    min-height: calc(100% - 80px);
+    padding: 2rem;
+    margin-top: 1rem;
+}
+
+.form-canvas.drag-over {
+    border-color: #4f46e5;
+    background: rgba(79, 70, 229, 0.1);
+}
+
+/* Form Fields */
+.form-field {
+    background: #242b3d;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.form-field:hover {
+    border-color: #4f46e5;
+}
+
+.form-field.selected {
+    border: 2px solid #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.field-actions {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.field-action-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #2d3648;
+    border: none;
+    border-radius: 4px;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.field-action-btn:hover {
+    background: #4f46e5;
+    color: white;
+}
+
+/* Field Settings Sidebar */
+.field-settings {
+    background: #242b3d;
+    border-radius: 12px;
+    padding: 1.25rem;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.field-settings h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #374151;
+}
+
+.settings-group {
+    margin-bottom: 1.5rem;
+}
+
+.settings-group label {
+    display: block;
+    font-size: 0.875rem;
+    color: #9ca3af;
+    margin-bottom: 0.5rem;
+}
+
+.settings-input {
+    width: 100%;
+    padding: 0.625rem;
+    background: #1a1f2e;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    color: #e2e8f0;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.settings-input:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Empty State */
+.empty-canvas {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #9ca3af;
+    text-align: center;
+}
+
+.empty-canvas p {
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+.quick-add-container {
+    width: 100%;
+    max-width: 600px;
+}
+
+.quick-add-container h4 {
+    color: #e2e8f0;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.quick-add-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.quick-add-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: #242b3d;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.quick-add-btn:hover {
+    background: #4f46e5;
+    border-color: #4f46e5;
+    transform: translateY(-1px);
+}
+
+.btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    font-size: 0.875rem;
+}
+
+/* Form Field Input Styles */
+.form-field input[type="text"],
+.form-field input[type="email"],
+.form-field input[type="tel"],
+.form-field textarea,
+.form-field select {
+    width: 100%;
+    padding: 0.75rem;
+    background: #1a1f2e;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    color: #e2e8f0;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.form-field input:focus,
+.form-field textarea:focus,
+.form-field select:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-field label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #e2e8f0;
+    margin-bottom: 0.5rem;
+}
+
+/* Radio and Checkbox Groups */
+.radio-group,
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.radio-group label,
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1a1f2e;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #374151;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4b5563;
+}
+
+/* Add these styles for the preview modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+}
+
+.modal-content {
+    position: relative;
+    background-color: #1a1a1a;
+    margin: 2rem auto;
+    padding: 0;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.preview-form {
+    padding: 1rem;
+}
+
+.preview-field {
+    margin-bottom: 1.5rem;
+}
+
+.preview-field label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #e5e7eb;
+}
+
+.preview-field input,
+.preview-field textarea,
+.preview-field select {
+    width: 100%;
+    padding: 0.75rem;
+    background: #374151;
+    border: 1px solid #4b5563;
+    border-radius: 4px;
+    color: #e5e7eb;
+}
+
+.required {
+    color: #ef4444;
+    margin-left: 0.25rem;
+} 

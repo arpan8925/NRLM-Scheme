@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ form.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: #1F2937;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .form-title {
+        font-size: 1.875rem;
+        font-weight: 600;
+        color: #F3F4F6;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+
+    .form-description {
+        color: #9CA3AF;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .form-field {
+        margin-bottom: 1.5rem;
+    }
+
+    .field-label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #E5E7EB;
+    }
+
+    .field-required {
+        color: #EF4444;
+        margin-left: 0.25rem;
+    }
+
+    .field-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: #374151;
+        border: 1px solid #4B5563;
+        border-radius: 6px;
+        color: #E5E7EB;
+        font-size: 1rem;
+        transition: border-color 0.15s ease;
+    }
+
+    .field-input:focus {
+        outline: none;
+        border-color: #60A5FA;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+    }
+
+    .field-input::placeholder {
+        color: #6B7280;
+    }
+
+    textarea.field-input {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    .radio-group, .checkbox-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .radio-option, .checkbox-option {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .radio-option input[type="radio"],
+    .checkbox-option input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
+        accent-color: #60A5FA;
+    }
+
+    select.field-input {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        padding-right: 2.5rem;
+    }
+
+    .submit-button {
+        display: block;
+        width: 100%;
+        padding: 0.875rem 1.5rem;
+        background: #2563EB;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+    }
+
+    .submit-button:hover {
+        background: #1D4ED8;
+    }
+
+    .submit-button:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1 class="form-title">{{ form.title }}</h1>
+    {% if form.description %}
+    <p class="form-description">{{ form.description }}</p>
+    {% endif %}
+
+    <form method="post" action="{% url 'form_builder:submit_form' form.slug %}">
+        {% csrf_token %}
+        {% for field in form_fields %}
+        <div class="form-field">
+            <label class="field-label">
+                {{ field.label }}
+                {% if field.required %}
+                <span class="field-required">*</span>
+                {% endif %}
+            </label>
+
+            {% if field.type == 'text' or field.type == 'email' or field.type == 'phone' or field.type == 'name' %}
+            <input 
+                type="{{ field.type }}" 
+                name="field_{{ forloop.counter }}"
+                class="field-input"
+                placeholder="{{ field.placeholder|default:'' }}"
+                {% if field.required %}required{% endif %}
+            >
+            {% elif field.type == 'textarea' or field.type == 'address' %}
+            <textarea 
+                name="field_{{ forloop.counter }}"
+                class="field-input"
+                placeholder="{{ field.placeholder|default:'' }}"
+                {% if field.required %}required{% endif %}
+            ></textarea>
+            {% elif field.type == 'select' %}
+            <select 
+                name="field_{{ forloop.counter }}"
+                class="field-input"
+                {% if field.required %}required{% endif %}
+            >
+                <option value="">Select an option</option>
+                {% for option in field.options %}
+                <option value="{{ option }}">{{ option }}</option>
+                {% endfor %}
+            </select>
+            {% elif field.type == 'radio' %}
+            <div class="radio-group">
+                {% for option in field.options %}
+                <label class="radio-option">
+                    <input 
+                        type="radio"
+                        name="field_{{ forloop.parentloop.counter }}"
+                        value="{{ option }}"
+                        {% if field.required %}required{% endif %}
+                    >
+                    {{ option }}
+                </label>
+                {% endfor %}
+            </div>
+            {% elif field.type == 'checkbox' %}
+            <div class="checkbox-group">
+                {% for option in field.options %}
+                <label class="checkbox-option">
+                    <input 
+                        type="checkbox"
+                        name="field_{{ forloop.parentloop.counter }}"
+                        value="{{ option }}"
+                    >
+                    {{ option }}
+                </label>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <button type="submit" class="submit-button">Submit</button>
+    </form>
+</div>
+{% endblock %} 

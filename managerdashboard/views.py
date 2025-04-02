@@ -11,6 +11,8 @@ import logging
 import json
 from django.http import JsonResponse
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_http_methods
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +27,7 @@ def dashboard(request):
         manager = None  # Superuser might not have a manager profile
     else:
         # For regular manager, show only their employees
-        manager = Manager.objects.get(user=request.user)
+        manager = request.user.dashboard_manager
         total_employees = Employee.objects.filter(manager=manager).count()
         employees = Employee.objects.filter(manager=manager).select_related('user')
     
@@ -51,7 +53,7 @@ def employee_list(request):
         employees = Employee.objects.all().select_related('user')
     else:
         # For regular manager, show only their employees
-        manager = Manager.objects.get(user=request.user)
+        manager = request.user.dashboard_manager
         employees = Employee.objects.filter(manager=manager).select_related('user')
     
     context = {
@@ -102,7 +104,7 @@ def add_employee(request):
                     manager = None
             else:
                 # If regular manager is creating employee, assign to themselves
-                manager = Manager.objects.get(user=request.user)
+                manager = request.user.dashboard_manager
             
             # Create employee
             employee = Employee.objects.create(
@@ -124,66 +126,88 @@ def add_employee(request):
 @login_required
 @manager_required
 def forms_list(request):
-    logger.info(f"Forms list view accessed by user: {request.user.email}")
-    try:
-        if request.user.is_superuser:
-            logger.info("Superuser accessing forms")
-            forms = Form.objects.all().order_by('-created_at')
-        else:
-            logger.info("Regular manager accessing forms")
-            try:
-                manager = Manager.objects.get(user=request.user)
-                forms = Form.objects.filter(creator=manager).order_by('-created_at')
-            except Manager.DoesNotExist:
-                logger.error(f"Manager profile not found for user: {request.user.email}")
-                messages.error(request, 'Manager profile not found.')
-                return redirect('managerdashboard:manager_dashboard')
-        
-        context = {
-            'forms': forms,
-            'draft_count': forms.filter(status='draft').count(),
-            'published_count': forms.filter(status='published').count(),
-            'archived_count': forms.filter(status='archived').count(),
-            'trash_count': forms.filter(status='trash').count(),
-            'user': request.user,
-        }
-        
-        logger.info(f"Forms loaded successfully. Total forms: {forms.count()}")
-        return render(request, 'managerdashboard/forms_list.html', context)
-        
-    except Exception as e:
-        logger.error(f"Error in forms_list view: {str(e)}", exc_info=True)
-        messages.error(request, f'Error loading forms: {str(e)}')
-        return redirect('managerdashboard:manager_dashboard')
+    if request.user.is_superuser:
+        # Superuser can see all forms
+        forms = Form.objects.all()
+    else:
+        # Regular users see only their forms
+        forms = Form.objects.filter(creator=request.user)
+    
+    # Get count for published forms
+    published_count = forms.filter(is_published=True).count()
+    
+    context = {
+        'forms': forms,
+        'published_count': published_count,
+    }
+    
+    return render(request, 'managerdashboard/forms_list.html', context)
 
 @login_required
 @manager_required
 def create_form(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            manager = Manager.objects.get(user=request.user) if not request.user.is_superuser else None
+    return render(request, 'managerdashboard/form_builder.html')
+
+@require_http_methods(["POST"])
+def save_form(request):
+    try:
+        # Parse JSON data from request body
+        data = json.loads(request.body)
+        title = data.get('title', 'Untitled Form')
+        fields = data.get('fields', [])
+        
+        # Log the received data
+        print("Received form data:", data)
+        
+        # Clean up the fields data to remove any empty options
+        cleaned_fields = []
+        for field in fields:
+            cleaned_field = {
+                'type': field['type'],
+                'label': field['label'],
+                'required': field.get('required', False)
+            }
             
-            form = Form.objects.create(
-                title=data['title'],
-                creator=manager,
-                status='draft',
-                form_data=data.get('fields', [])
-            )
+            # Only add placeholder if it exists and has a value
+            if field.get('placeholder'):
+                cleaned_field['placeholder'] = field['placeholder']
             
-            return JsonResponse({
-                'success': True,
-                'form_id': form.id,
-                'redirect_url': reverse('managerdashboard:edit_form', kwargs={'slug': form.slug})
-            })
+            # Only add options for select, radio, checkbox fields if they exist
+            if field['type'] in ['select', 'radio', 'checkbox'] and field.get('options'):
+                cleaned_field['options'] = field['options']
             
-        except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': str(e)
-            }, status=400)
-    
-    return render(request, 'managerdashboard/create_form.html')
+            cleaned_fields.append(cleaned_field)
+        
+        # Create form instance with cleaned data
+        form = Form.objects.create(
+            title=title,
+            fields=json.dumps(cleaned_fields),
+            is_published=False
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'form_id': form.id,
+            'redirect_url': reverse('managerdashboard:forms_list'),
+            'form_data': {
+                'title': form.title,
+                'fields': json.loads(form.fields),
+                'created_at': form.created_at.isoformat(),
+                'is_published': form.is_published
+            }
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid JSON data'
+        }, status=400)
+    except Exception as e:
+        print("Error saving form:", str(e))
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 @login_required
 @manager_required
@@ -191,15 +215,34 @@ def update_form(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            form = Form.objects.get(id=data['form_id'])
+            form = Form.objects.get(slug=data['slug'])
             
             # Verify ownership
-            if not request.user.is_superuser and form.creator.user != request.user:
+            if not request.user.is_superuser and form.created_by != request.user:
                 raise PermissionError("You don't have permission to edit this form")
             
+            # Clean up the fields data
+            cleaned_fields = []
+            for field in data['fields']:
+                cleaned_field = {
+                    'type': field['type'],
+                    'label': field['label'],
+                    'required': field.get('required', False)
+                }
+                
+                # Only add placeholder if it exists and has a value
+                if field.get('placeholder'):
+                    cleaned_field['placeholder'] = field['placeholder']
+                
+                # Only add options for select, radio, checkbox fields if they exist
+                if field['type'] in ['select', 'radio', 'checkbox'] and field.get('options'):
+                    cleaned_field['options'] = field['options']
+                
+                cleaned_fields.append(cleaned_field)
+            
+            # Update form
             form.title = data['title']
-            form.status = data['status']
-            form.form_data = data['fields']
+            form.fields = json.dumps(cleaned_fields)
             form.save()
             
             return JsonResponse({
@@ -218,20 +261,28 @@ def update_form(request):
 def edit_form(request, slug):
     try:
         form = Form.objects.get(slug=slug)
-        if not request.user.is_superuser and form.creator.user != request.user:
-            messages.error(request, 'You do not have permission to edit this form.')
+        
+        # Verify ownership
+        if not request.user.is_superuser and form.created_by != request.user:
+            messages.error(request, "You don't have permission to edit this form")
             return redirect('managerdashboard:forms_list')
-            
-        if request.method == 'POST':
-            form.title = request.POST.get('title')
-            form.description = request.POST.get('description')
-            form.save()
-            messages.success(request, 'Form updated successfully!')
-            return redirect('managerdashboard:forms_list')
-            
-        return render(request, 'managerdashboard/edit_form.html', {'form': form})
+        
+        # Load form fields from JSON
+        try:
+            form_fields = json.loads(form.fields)
+        except json.JSONDecodeError:
+            form_fields = []
+        
+        context = {
+            'form': form,
+            'form_fields': json.dumps(form_fields),
+            'user': request.user,
+        }
+        
+        return render(request, 'managerdashboard/edit_form.html', context)
+        
     except Form.DoesNotExist:
-        messages.error(request, 'Form not found.')
+        messages.error(request, 'Form not found')
         return redirect('managerdashboard:forms_list')
 
 @login_required
@@ -244,7 +295,7 @@ def duplicate_form(request, slug):
             return redirect('managerdashboard:forms_list')
             
         # Create a new form with copied data
-        manager = Manager.objects.get(user=request.user) if not request.user.is_superuser else None
+        manager = request.user.dashboard_manager if not request.user.is_superuser else None
         new_form = Form.objects.create(
             title=f"{original_form.title} (Copy)",
             description=original_form.description,
@@ -273,3 +324,31 @@ def delete_form(request, slug):
     except Form.DoesNotExist:
         messages.error(request, 'Form not found.')
         return redirect('managerdashboard:forms_list')
+
+@login_required
+@manager_required
+def publish_form(request, slug):
+    try:
+        form = Form.objects.get(slug=slug)
+        
+        # Check if user has permission to publish this form
+        if not request.user.is_superuser and form.created_by != request.user:
+            messages.error(request, 'You do not have permission to publish this form.')
+            return redirect('managerdashboard:forms_list')
+        
+        # Check if form is already published
+        if form.is_published:
+            messages.error(request, 'This form is already published.')
+            return redirect('managerdashboard:forms_list')
+        
+        # Update form to published
+        form.is_published = True
+        form.save()
+        
+        messages.success(request, 'Form published successfully!')
+    except Form.DoesNotExist:
+        messages.error(request, 'Form not found.')
+    except Exception as e:
+        messages.error(request, f'Error publishing form: {str(e)}')
+    
+    return redirect('managerdashboard:forms_list')

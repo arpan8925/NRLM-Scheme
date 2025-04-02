@@ -2,34 +2,33 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from .models import Manager, Employee
+from django.urls import reverse
 
 # Create your views here.
 
 def login_view(request):
     if request.method == 'POST':
-        email = request.POST.get('email')
+        username = request.POST.get('username')
         password = request.POST.get('password')
-        user = authenticate(request, email=email, password=password)
+        user = authenticate(request, username=username, password=password)
         
         if user is not None:
             login(request, user)
             
-            # If user is superuser, show them all options
+            # If user is superuser, redirect to choice page
             if user.is_superuser:
                 return render(request, 'accounts/superuser_choice.html')
             
-            # Check if user is manager or employee
+            # If user has manager profile, redirect to manager dashboard
             try:
-                manager = Manager.objects.get(user=user)
-                return redirect('managerdashboard:manager_dashboard')
-            except Manager.DoesNotExist:
-                try:
-                    employee = Employee.objects.get(user=user)
-                    return redirect('employee_dashboard')
-                except Employee.DoesNotExist:
-                    messages.error(request, 'User profile not found.')
-                    return redirect('login')
+                if hasattr(user, 'dashboard_manager') or hasattr(user, 'account_manager'):
+                    return redirect(reverse('managerdashboard:manager_dashboard'))
+            except:
+                pass
+                
+            # Default redirect
+            return redirect('home')  # or wherever you want to redirect normal users
         else:
-            messages.error(request, 'Invalid email or password.')
-    
+            return render(request, 'accounts/login.html', {'error': 'Invalid credentials'})
+            
     return render(request, 'accounts/login.html')

@@ -100,8 +100,11 @@
             
             <div class="dashboard-options">
                 <a href="{% url 'managerdashboard:manager_dashboard' %}" class="dashboard-link">
-                    <h2>Manager Dashboard</h2>
-                    <p>Access manager controls and overview</p>
+                    <div class="dashboard-option">
+                        <i class="fas fa-user-tie"></i>
+                        <h2>Manager Dashboard</h2>
+                        <p>Access form management and employee controls</p>
+                    </div>
                 </a>
                 
                 <a href="{% url 'employee_dashboard' %}" class="dashboard-link">

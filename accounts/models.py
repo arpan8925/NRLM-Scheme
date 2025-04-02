@@ -29,16 +29,24 @@ class User(AbstractUser):
     objects = CustomUserManager()
 
 class Manager(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(
+        'User',  # Use string reference instead of direct model
+        on_delete=models.CASCADE,
+        related_name='account_manager'
+    )
     department = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=15)
     employee_count = models.IntegerField(default=0)
     
     def __str__(self):
-        return f"{self.user.get_full_name()} - {self.department} Manager"
+        return self.user.email
+
+    class Meta:
+        verbose_name = 'Account Manager'
+        verbose_name_plural = 'Account Managers'
 
 class Employee(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField('User', on_delete=models.CASCADE)  # Use string reference
     manager = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True)
     department = models.CharField(max_length=100)
     employee_id = models.CharField(max_length=10, unique=True)
