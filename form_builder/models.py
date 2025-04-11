@@ -3,6 +3,7 @@ from django.utils.text import slugify
 from django.conf import settings
 import uuid
 import json
+import os
 
 class Form(models.Model):
     title = models.CharField(max_length=200)
@@ -37,3 +38,27 @@ class FormSubmission(models.Model):
 
     def __str__(self):
         return f"Submission for {self.form.title} at {self.created_at}"
+
+
+def get_file_upload_path(instance, filename):
+    # Generate a unique path for the uploaded file
+    # Format: uploads/form_<form_id>/submission_<submission_id>/<filename>
+    return os.path.join(
+        'uploads',
+        f'form_{instance.form_submission.form.id}',
+        f'submission_{instance.form_submission.id}',
+        filename
+    )
+
+
+class FileUpload(models.Model):
+    form_submission = models.ForeignKey(FormSubmission, on_delete=models.CASCADE, related_name='file_uploads')
+    field_label = models.CharField(max_length=255)  # The label of the form field
+    file = models.FileField(upload_to=get_file_upload_path)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"File for {self.field_label} in {self.form_submission}"
+
+    def filename(self):
+        return os.path.basename(self.file.name)

@@ -130,7 +130,7 @@
     <p class="form-description">{{ form.description }}</p>
     {% endif %}
 
-    <form method="post" action="{% url 'form_builder:submit_form' form.slug %}">
+    <form method="post" action="{% url 'form_builder:submit_form' form.slug %}" enctype="multipart/form-data">
         {% csrf_token %}
         {% for field in form_fields %}
         <div class="form-field">
@@ -142,22 +142,22 @@
             </label>
 
             {% if field.type == 'text' or field.type == 'email' or field.type == 'phone' or field.type == 'name' %}
-            <input 
-                type="{{ field.type }}" 
+            <input
+                type="{{ field.type }}"
                 name="field_{{ forloop.counter }}"
                 class="field-input"
                 placeholder="{{ field.placeholder|default:'' }}"
                 {% if field.required %}required{% endif %}
             >
             {% elif field.type == 'textarea' or field.type == 'address' %}
-            <textarea 
+            <textarea
                 name="field_{{ forloop.counter }}"
                 class="field-input"
                 placeholder="{{ field.placeholder|default:'' }}"
                 {% if field.required %}required{% endif %}
             ></textarea>
             {% elif field.type == 'select' %}
-            <select 
+            <select
                 name="field_{{ forloop.counter }}"
                 class="field-input"
                 {% if field.required %}required{% endif %}
@@ -171,7 +171,7 @@
             <div class="radio-group">
                 {% for option in field.options %}
                 <label class="radio-option">
-                    <input 
+                    <input
                         type="radio"
                         name="field_{{ forloop.parentloop.counter }}"
                         value="{{ option }}"
@@ -185,7 +185,7 @@
             <div class="checkbox-group">
                 {% for option in field.options %}
                 <label class="checkbox-option">
-                    <input 
+                    <input
                         type="checkbox"
                         name="field_{{ forloop.parentloop.counter }}"
                         value="{{ option }}"
@@ -194,6 +194,14 @@
                 </label>
                 {% endfor %}
             </div>
+            {% elif field.type == 'file' %}
+            <input
+                type="file"
+                name="field_{{ forloop.counter }}"
+                class="field-input"
+                {% if field.accept %}accept="{{ field.accept }}"{% endif %}
+                {% if field.required %}required{% endif %}
+            >
             {% endif %}
         </div>
         {% endfor %}
@@ -201,4 +209,4 @@
         <button type="submit" class="submit-button">Submit</button>
     </form>
 </div>
-{% endblock %} 
+{% endblock %}
