@@ -42,9 +42,7 @@ class User(AbstractUser):
     block = models.CharField(max_length=100, blank=True, null=True)
 
     # Using default id as primary key
-    id = models.AutoField(primary_key=True)  # Keep the default id as primary key
-
-    # Removed employee_id, position, and department fields as requested
+    id = models.AutoField(primary_key=True) 
 
     # Manager specific fields
     phone_number = models.CharField(max_length=15, blank=True, null=True)

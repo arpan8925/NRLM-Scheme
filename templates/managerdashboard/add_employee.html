@@ -1,6 +1,20 @@
 {% extends 'managerdashboard/dashboard.html' %}
 {% load static %}
 
+<style>
+    .loading-spinner {
+        display: inline-block;
+        margin-top: 5px;
+        font-size: 0.9em;
+        color: #3b82f6;
+    }
+
+    select:disabled {
+        background-color: #f1f5f9;
+        cursor: not-allowed;
+    }
+</style>
+
 {% block main_content %}
 <div class="form-container">
     <div class="page-header">
@@ -114,32 +128,29 @@
                     <div class="form-group">
                         <label for="state">Select State *</label>
                         <select name="state" id="state">
-                            <option value="" {% if not form_data.state %}selected{% endif %}>Select a State</option>
-                            <option value="2" {% if form_data.state == '2' %}selected{% endif %}>ANDHRA PRADESH (AP)</option>
-                            <option value="3" {% if form_data.state == '3' %}selected{% endif %}>ARUNACHAL PRADESH (AR)</option>
-                            <option value="4" {% if form_data.state == '4' %}selected{% endif %}>ASSAM (AS)</option>
-                            <option value="5" {% if form_data.state == '5' %}selected{% endif %}>BIHAR (BH)</option>
+                            <option value="" selected>Select a State</option>
+                            <!-- States will be loaded dynamically -->
                         </select>
+                        <div class="loading-spinner" id="state-loading" style="display: none;">Loading...</div>
                     </div>
                     <div class="form-group">
                         <label for="district">Select District *</label>
-                        <select name="district" id="district">
-                            <option value="" {% if not form_data.district %}selected{% endif %}>Select a District</option>
-                            <option value="10002" {% if form_data.district == '10002' %}selected{% endif %}>SOUTH GOA (SG)</option>
-                            <option value="10001" {% if form_data.district == '10001' %}selected{% endif %}>NORTH GOA (NG)</option>
+                        <select name="district" id="district" disabled>
+                            <option value="" selected>Select a District</option>
+                            <!-- Districts will be loaded dynamically -->
                         </select>
+                        <div class="loading-spinner" id="district-loading" style="display: none;">Loading...</div>
                     </div>
                 </div>
 
                 <div class="form-row" id="district-employee-details">
                     <div class="form-group">
                         <label for="block">Select Block *</label>
-                        <select name="block" id="block">
-                            <option value="" {% if not form_data.block %}selected{% endif %}>Select a Block</option>
-                            <option value="100006" {% if form_data.block == '100006' %}selected{% endif %}>CANACONA</option>
-                            <option value="100008" {% if form_data.block == '100008' %}selected{% endif %}>MORMUGAO</option>
-                            <option value="100009" {% if form_data.block == '100009' %}selected{% endif %}>PONDA</option>
+                        <select name="block" id="block" disabled>
+                            <option value="" selected>Select a Block</option>
+                            <!-- Blocks will be loaded dynamically -->
                         </select>
+                        <div class="loading-spinner" id="block-loading" style="display: none;">Loading...</div>
                     </div>
                 </div>
             </div>
@@ -172,12 +183,124 @@
         }
     }
 
-    // Add event listener for role change
+    // Function to fetch states from API
+    async function fetchStates() {
+        try {
+            document.getElementById('state-loading').style.display = 'block';
+            const response = await fetch('https://cdn.lokos.in/lokos-masterdata/statemaster.json');
+            const states = await response.json();
+
+            const stateSelect = document.getElementById('state');
+            stateSelect.innerHTML = '<option value="" selected>Select a State</option>';
+
+            states.forEach(state => {
+                const option = document.createElement('option');
+                option.value = state.state_id;
+                option.textContent = `${state.state_name_en} (${state.state_short_name_en})`;
+                stateSelect.appendChild(option);
+            });
+
+            document.getElementById('state-loading').style.display = 'none';
+        } catch (error) {
+            console.error('Error fetching states:', error);
+            document.getElementById('state-loading').style.display = 'none';
+            alert('Failed to load states. Please try again.');
+        }
+    }
+
+    // Function to fetch districts based on selected state
+    async function fetchDistricts(stateId) {
+        try {
+            const districtSelect = document.getElementById('district');
+            const blockSelect = document.getElementById('block');
+
+            // Reset districts and blocks
+            districtSelect.innerHTML = '<option value="" selected>Select a District</option>';
+            blockSelect.innerHTML = '<option value="" selected>Select a Block</option>';
+
+            // Disable selects
+            blockSelect.disabled = true;
+
+            if (!stateId) {
+                districtSelect.disabled = true;
+                return;
+            }
+
+            document.getElementById('district-loading').style.display = 'block';
+            districtSelect.disabled = true;
+
+            const response = await fetch(`https://cdn.lokos.in/lokos-masterdata/state/${stateId}.json`);
+            const districts = await response.json();
+
+            districts.forEach(district => {
+                const option = document.createElement('option');
+                option.value = district.district_id;
+                option.textContent = `${district.district_name_en} (${district.district_short_name_en})`;
+                districtSelect.appendChild(option);
+            });
+
+            districtSelect.disabled = false;
+            document.getElementById('district-loading').style.display = 'none';
+        } catch (error) {
+            console.error('Error fetching districts:', error);
+            document.getElementById('district-loading').style.display = 'none';
+            alert('Failed to load districts. Please try again.');
+        }
+    }
+
+    // Function to fetch blocks based on selected state and district
+    async function fetchBlocks(stateId, districtId) {
+        try {
+            const blockSelect = document.getElementById('block');
+
+            // Reset blocks
+            blockSelect.innerHTML = '<option value="" selected>Select a Block</option>';
+
+            if (!stateId || !districtId) {
+                blockSelect.disabled = true;
+                return;
+            }
+
+            document.getElementById('block-loading').style.display = 'block';
+            blockSelect.disabled = true;
+
+            const response = await fetch(`https://cdn.lokos.in/lokos-masterdata/state/${stateId}/district/${districtId}.json`);
+            const blocks = await response.json();
+
+            blocks.forEach(block => {
+                const option = document.createElement('option');
+                option.value = block.block_id;
+                option.textContent = block.block_name_en;
+                blockSelect.appendChild(option);
+            });
+
+            blockSelect.disabled = false;
+            document.getElementById('block-loading').style.display = 'none';
+        } catch (error) {
+            console.error('Error fetching blocks:', error);
+            document.getElementById('block-loading').style.display = 'none';
+            alert('Failed to load blocks. Please try again.');
+        }
+    }
+
+    // Add event listeners
     document.getElementById('role').addEventListener('change', handleRoleChange);
+
+    document.getElementById('state').addEventListener('change', function() {
+        const stateId = this.value;
+        fetchDistricts(stateId);
+    });
+
+    document.getElementById('district').addEventListener('change', function() {
+        const stateId = document.getElementById('state').value;
+        const districtId = this.value;
+        fetchBlocks(stateId, districtId);
+    });
 
     // Initialize form state on page load
     document.addEventListener('DOMContentLoaded', function() {
         handleRoleChange();
+        fetchStates(); // Load states on page load
     });
 </script>
 
