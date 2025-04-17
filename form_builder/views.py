@@ -31,7 +31,8 @@ def submit_form(request, slug):
     # Create form submission first to get the ID for file uploads
     form_submission = FormSubmission.objects.create(
         form=form,
-        responses=json.dumps({})  # Empty responses initially
+        responses=json.dumps({}),  # Empty responses initially
+        employee=request.user if request.user.is_authenticated else None
     )
 
     # Process each field

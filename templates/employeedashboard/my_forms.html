@@ -1,0 +1,37 @@
+{% extends 'employeedashboard/base.html' %}
+
+{% block title %}My Forms{% endblock %}
+
+{% block content %}
+<div class="top-bar">
+    <div class="welcome-text">
+        <h1>My Forms</h1>
+        <p>View and fill out available forms</p>
+    </div>
+    <div class="user-menu">
+        <span class="user-name">{{ user.get_full_name }}</span>
+        <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+    </div>
+</div>
+
+<div class="forms-container">
+    {% if forms %}
+        <div class="forms-grid">
+            {% for form in forms %}
+                <div class="form-card">
+                    <h3>{{ form.title }}</h3>
+                    <p>{{ form.description|truncatechars:100 }}</p>
+                    <div class="form-meta">
+                        <span class="form-date">Created: {{ form.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    <a href="{% url 'employeedashboard:view_form' form.slug %}" class="view-form-btn">View Form</a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-forms">
+            <p>No forms are available at this time.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

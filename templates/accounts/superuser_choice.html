@@ -12,13 +12,13 @@
             --secondary-color: #6B7280;
             --background-color: #F3F4F6;
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--background-color);
@@ -27,41 +27,41 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .container {
             width: 100%;
             max-width: 600px;
             padding: 2rem;
         }
-        
+
         .choice-card {
             background: white;
             padding: 2rem;
             border-radius: 1rem;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
-        
+
         .header {
             text-align: center;
             margin-bottom: 2rem;
         }
-        
+
         .header h1 {
             color: #111827;
             font-size: 1.875rem;
             margin-bottom: 0.5rem;
         }
-        
+
         .header p {
             color: var(--secondary-color);
         }
-        
+
         .dashboard-options {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
         }
-        
+
         .dashboard-link {
             display: block;
             padding: 1.5rem;
@@ -73,17 +73,17 @@
             color: #111827;
             transition: all 0.2s;
         }
-        
+
         .dashboard-link:hover {
             border-color: var(--primary-color);
             background-color: #F8FAFC;
         }
-        
+
         .dashboard-link h2 {
             font-size: 1.25rem;
             margin-bottom: 0.5rem;
         }
-        
+
         .dashboard-link p {
             color: var(--secondary-color);
             font-size: 0.875rem;
@@ -97,7 +97,7 @@
                 <h1>Welcome, Superuser!</h1>
                 <p>Choose which dashboard you'd like to access</p>
             </div>
-            
+
             <div class="dashboard-options">
                 <a href="{% url 'managerdashboard:manager_dashboard' %}" class="dashboard-link">
                     <div class="dashboard-option">
@@ -106,8 +106,8 @@
                         <p>Access form management and employee controls</p>
                     </div>
                 </a>
-                
-                <a href="{% url 'employee_dashboard' %}" class="dashboard-link">
+
+                <a href="{% url 'employeedashboard:employee_dashboard' %}" class="dashboard-link">
                     <h2>Employee Dashboard</h2>
                     <p>Access employee features and forms</p>
                 </a>
@@ -115,4 +115,4 @@
         </div>
     </div>
 </body>
-</html> 
+</html>

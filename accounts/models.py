@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.translation import gettext_lazy as _
+import uuid
 
 # Create your models here.
 
@@ -20,38 +21,47 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 class User(AbstractUser):
+    # Role choices
+    ADMIN = 'admin'
+    DISTRICT_EMPLOYEE = 'district_employee'
+    BLOCK_EMPLOYEE = 'block_employee'
+
+    ROLE_CHOICES = [
+        (ADMIN, 'Admin'),
+        (DISTRICT_EMPLOYEE, 'District Level Employee'),
+        (BLOCK_EMPLOYEE, 'Block Level Employee'),
+    ]
+
     username = None
     email = models.EmailField(_('email address'), unique=True)
-    
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ADMIN)
+
+    # Location fields
+    state = models.CharField(max_length=100, blank=True, null=True)
+    district = models.CharField(max_length=100, blank=True, null=True)
+    block = models.CharField(max_length=100, blank=True, null=True)
+
+    # Using default id as primary key
+    id = models.AutoField(primary_key=True)  # Keep the default id as primary key
+
+    # Removed employee_id, position, and department fields as requested
+
+    # Manager specific fields
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
-    
+
     objects = CustomUserManager()
 
-class Manager(models.Model):
-    user = models.OneToOneField(
-        'User',  # Use string reference instead of direct model
-        on_delete=models.CASCADE,
-        related_name='account_manager'
-    )
-    department = models.CharField(max_length=100)
-    phone_number = models.CharField(max_length=15)
-    employee_count = models.IntegerField(default=0)
-    
-    def __str__(self):
-        return self.user.email
+    def is_admin(self):
+        return self.role == self.ADMIN
 
-    class Meta:
-        verbose_name = 'Account Manager'
-        verbose_name_plural = 'Account Managers'
+    def is_district_employee(self):
+        return self.role == self.DISTRICT_EMPLOYEE
 
-class Employee(models.Model):
-    user = models.OneToOneField('User', on_delete=models.CASCADE)  # Use string reference
-    manager = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True)
-    department = models.CharField(max_length=100)
-    employee_id = models.CharField(max_length=10, unique=True)
-    position = models.CharField(max_length=100)
-    hire_date = models.DateField(auto_now_add=True)
-    
-    def __str__(self):
-        return f"{self.user.get_full_name()} - {self.position}"
+    def is_block_employee(self):
+        return self.role == self.BLOCK_EMPLOYEE
+
+# These models are deprecated and will be removed
+# All functionality is now in the User model

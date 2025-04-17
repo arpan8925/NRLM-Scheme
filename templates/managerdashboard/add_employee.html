@@ -21,11 +21,11 @@
             Back to List
         </a>
     </div>
-    
+
     <div class="form-card">
         <form method="post" class="employee-form">
             {% csrf_token %}
-            
+
             {% if messages %}
                 <div class="messages">
                     {% for message in messages %}
@@ -35,7 +35,7 @@
                     {% endfor %}
                 </div>
             {% endif %}
-            
+
             <div class="form-section">
                 <h3>
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -47,7 +47,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="email">Email Address*</label>
-                        <input type="email" id="email" name="email" required>
+                        <input type="email" id="email" name="email" value="{{ form_data.email|default:'' }}" required>
                     </div>
                     <div class="form-group">
                         <label for="password">Password*</label>
@@ -55,7 +55,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="form-section">
                 <h3>
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -67,11 +67,11 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="first_name">First Name*</label>
-                        <input type="text" id="first_name" name="first_name" required>
+                        <input type="text" id="first_name" name="first_name" value="{{ form_data.first_name|default:'' }}" required>
                     </div>
                     <div class="form-group">
                         <label for="last_name">Last Name*</label>
-                        <input type="text" id="last_name" name="last_name" required>
+                        <input type="text" id="last_name" name="last_name" value="{{ form_data.last_name|default:'' }}" required>
                     </div>
                 </div>
             </div>
@@ -88,16 +88,19 @@
                     <div class="form-group">
                         <label for="department">Select Account Role *</label>
                         <select name="role" id="role" required>
-                            <option value="" selected>Select a Role</option>
-                            <option value="admin">Admin</option>
-                            <option value="district_employee">District Level Employee</option>
-                            <option value="block_employee">Block Level Employee</option>
+                            <option value="" {% if not form_data.role %}selected{% endif %}>Select a Role</option>
+                            <option value="admin" {% if form_data.role == 'admin' %}selected{% endif %}>Admin</option>
+                            <option value="district_employee" {% if form_data.role == 'district_employee' %}selected{% endif %}>District Level Employee</option>
+                            <option value="block_employee" {% if form_data.role == 'block_employee' %}selected{% endif %}>Block Level Employee</option>
                         </select>
+                        <small class="form-text">Admin: Manager role with full access<br>District/Block: Employee roles with limited access</small>
                     </div>
                 </div>
             </div>
 
-            <!-- Employment Details (Hidden by Default) -->
+            <!-- Note: Employee ID will be generated automatically -->
+
+            <!-- Location Details (Hidden by Default) -->
             <div class="form-section" id="employment-details" style="display: none;">
                 <h3>
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -106,36 +109,36 @@
                     </svg>
                     Employment Details
                 </h3>
-                
+
                 <div class="form-row">
                     <div class="form-group">
                         <label for="state">Select State *</label>
                         <select name="state" id="state">
-                            <option value="" selected>Select a State</option>
-                            <option value="2">ANDHRA PRADESH (AP)</option>
-                            <option value="3">ARUNACHAL PRADESH (AR)</option>
-                            <option value="4">ASSAM (AS)</option>
-                            <option value="5">BIHAR (BH)</option>
+                            <option value="" {% if not form_data.state %}selected{% endif %}>Select a State</option>
+                            <option value="2" {% if form_data.state == '2' %}selected{% endif %}>ANDHRA PRADESH (AP)</option>
+                            <option value="3" {% if form_data.state == '3' %}selected{% endif %}>ARUNACHAL PRADESH (AR)</option>
+                            <option value="4" {% if form_data.state == '4' %}selected{% endif %}>ASSAM (AS)</option>
+                            <option value="5" {% if form_data.state == '5' %}selected{% endif %}>BIHAR (BH)</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="district">Select District *</label>
                         <select name="district" id="district">
-                            <option value="" selected>Select a District</option>
-                            <option value="10002">SOUTH GOA (SG)</option>
-                            <option value="10001">NORTH GOA (NG)</option>
+                            <option value="" {% if not form_data.district %}selected{% endif %}>Select a District</option>
+                            <option value="10002" {% if form_data.district == '10002' %}selected{% endif %}>SOUTH GOA (SG)</option>
+                            <option value="10001" {% if form_data.district == '10001' %}selected{% endif %}>NORTH GOA (NG)</option>
                         </select>
                     </div>
                 </div>
-                
+
                 <div class="form-row" id="district-employee-details">
                     <div class="form-group">
                         <label for="block">Select Block *</label>
                         <select name="block" id="block">
-                            <option value="" selected>Select a Block</option>
-                            <option value="100006">CANACONA</option>
-                            <option value="100008">MORMUGAO</option>
-                            <option value="100009">PONDA</option>
+                            <option value="" {% if not form_data.block %}selected{% endif %}>Select a Block</option>
+                            <option value="100006" {% if form_data.block == '100006' %}selected{% endif %}>CANACONA</option>
+                            <option value="100008" {% if form_data.block == '100008' %}selected{% endif %}>MORMUGAO</option>
+                            <option value="100009" {% if form_data.block == '100009' %}selected{% endif %}>PONDA</option>
                         </select>
                     </div>
                 </div>
@@ -152,11 +155,12 @@
 
 
 <script>
-    document.getElementById('role').addEventListener('change', function() {
-        var role = this.value;
+    // Function to handle role change
+    function handleRoleChange() {
+        var role = document.getElementById('role').value;
         var employmentDetails = document.getElementById('employment-details');
         var districtEmployeeDetails = document.getElementById('district-employee-details');
-        
+
         if (role === 'admin') {
             employmentDetails.style.display = 'none'; // Hide Employment Details for Admin
         } else if (role === 'block_employee') {
@@ -166,6 +170,14 @@
             employmentDetails.style.display = 'block';
             districtEmployeeDetails.style.display = 'none';
         }
+    }
+
+    // Add event listener for role change
+    document.getElementById('role').addEventListener('change', handleRoleChange);
+
+    // Initialize form state on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        handleRoleChange();
     });
 </script>
 

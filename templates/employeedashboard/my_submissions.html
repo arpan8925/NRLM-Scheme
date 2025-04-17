@@ -1,0 +1,45 @@
+{% extends 'employeedashboard/base.html' %}
+
+{% block title %}My Submissions{% endblock %}
+
+{% block content %}
+<div class="top-bar">
+    <div class="welcome-text">
+        <h1>My Submissions</h1>
+        <p>View your form submissions</p>
+    </div>
+    <div class="user-menu">
+        <span class="user-name">{{ user.get_full_name }}</span>
+        <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+    </div>
+</div>
+
+<div class="submissions-container">
+    {% if submissions %}
+        <div class="submissions-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Form</th>
+                        <th>Submission Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for submission in submissions %}
+                        <tr>
+                            <td>{{ submission.form.title }}</td>
+                            <td>{{ submission.created_at|date:"M d, Y H:i" }}</td>
+                            <td><span class="status-completed">Completed</span></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="no-submissions">
+            <p>You haven't submitted any forms yet.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

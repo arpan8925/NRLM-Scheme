@@ -1,0 +1,38 @@
+{% extends 'employeedashboard/base.html' %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="top-bar">
+    <div class="welcome-text">
+        <h1>My Profile</h1>
+        <p>View and manage your profile information</p>
+    </div>
+    <div class="user-menu">
+        <span class="user-name">{{ user.get_full_name }}</span>
+        <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+    </div>
+</div>
+
+<div class="profile-container">
+    <div class="profile-card">
+        <div class="profile-header">
+            <h2>Personal Information</h2>
+        </div>
+        <div class="profile-body">
+            <div class="profile-field">
+                <label>Full Name</label>
+                <p>{{ user.get_full_name }}</p>
+            </div>
+            <div class="profile-field">
+                <label>Email</label>
+                <p>{{ user.email }}</p>
+            </div>
+            <div class="profile-field">
+                <label>Role</label>
+                <p>{{ employee.get_role_display }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

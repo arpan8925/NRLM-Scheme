@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .decorators import manager_required
-from accounts.models import Employee, Manager, User
+from accounts.models import User
 from django.db.models import Count
 from django.contrib import messages
 from django.utils.crypto import get_random_string
@@ -16,20 +16,18 @@ from django.views.decorators.http import require_http_methods
 
 logger = logging.getLogger(__name__)
 
+# Removed the generate_unique_employee_id function as it's no longer needed
+
 @login_required
 @manager_required
 def dashboard(request):
     # Get statistics
-    if request.user.is_superuser:
-        # For superuser, show all employees
-        total_employees = Employee.objects.count()
-        employees = Employee.objects.all().select_related('user')
-        manager = None  # Superuser might not have a manager profile
-    else:
-        # For regular manager, show only their employees
-        manager = request.user.dashboard_manager
-        total_employees = Employee.objects.filter(manager=manager).count()
-        employees = Employee.objects.filter(manager=manager).select_related('user')
+    # Show all employees (users with employee roles)
+    total_employees = User.objects.filter(role__in=[User.DISTRICT_EMPLOYEE, User.BLOCK_EMPLOYEE]).count()
+    employees = User.objects.filter(role__in=[User.DISTRICT_EMPLOYEE, User.BLOCK_EMPLOYEE])
+
+    # Current admin user
+    manager = request.user
 
     recent_submissions = 0  # You can add submission count logic later
     pending_forms = 0  # You can add pending forms count logic later
@@ -48,13 +46,8 @@ def dashboard(request):
 @login_required
 @manager_required
 def employee_list(request):
-    if request.user.is_superuser:
-        # For superuser, show all employees
-        employees = Employee.objects.all().select_related('user')
-    else:
-        # For regular manager, show only their employees
-        manager = request.user.dashboard_manager
-        employees = Employee.objects.filter(manager=manager).select_related('user')
+    # Show all employees (users with employee roles)
+    employees = User.objects.filter(role__in=[User.DISTRICT_EMPLOYEE, User.BLOCK_EMPLOYEE])
 
     context = {
         'employees': employees,
@@ -67,59 +60,71 @@ def employee_list(request):
 @manager_required
 def add_employee(request):
     if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        employee_id = request.POST.get('employee_id')
-        position = request.POST.get('position')
-        department = request.POST.get('department')
-        hire_date = request.POST.get('hire_date') or None
+        # Get form data
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
 
-        # Check if email already exists
-        if User.objects.filter(email=email).exists():
-            messages.error(request, 'Email already exists. Please use a different email.')
-            return render(request, 'managerdashboard/add_employee.html')
+        # Validate required fields
+        if not email or not password or not first_name or not last_name:
+            messages.error(request, 'Email, password, first name, and last name are required.')
+            return render(request, 'managerdashboard/add_employee.html', {
+                'form_data': request.POST,
+            })
 
-        # Check if employee ID already exists
-        if Employee.objects.filter(employee_id=employee_id).exists():
-            messages.error(request, 'Employee ID already exists. Please use a different ID.')
-            return render(request, 'managerdashboard/add_employee.html')
+        # Check if email already exists - case insensitive check
+        if User.objects.filter(email__iexact=email).exists():
+            messages.error(request, f'Email {email} already exists. Please use a different email.')
+            return render(request, 'managerdashboard/add_employee.html', {
+                'form_data': request.POST,  # Return the form data to repopulate the form
+            })
+
+        # We'll generate the employee ID automatically
 
         try:
-            # Create user
+            # Normalize email to lowercase
+            email = email.lower()
+
+            # Double-check if email exists (case insensitive)
+            if User.objects.filter(email__iexact=email).exists():
+                messages.error(request, f'Email {email} already exists. Please use a different email.')
+                return render(request, 'managerdashboard/add_employee.html', {
+                    'form_data': request.POST,
+                })
+
+            # Get role from form
+            role = request.POST.get('role')
+
+            # Create user with all fields at once
             user = User.objects.create_user(
                 email=email,
                 password=password,
                 first_name=first_name,
-                last_name=last_name
-            )
-
-            # Get manager
-            if request.user.is_superuser:
-                # If superuser is creating employee, assign to first manager or None
-                try:
-                    manager = Manager.objects.first()
-                except Manager.DoesNotExist:
-                    manager = None
-            else:
-                # If regular manager is creating employee, assign to themselves
-                manager = request.user.dashboard_manager
-
-            # Create employee
-            employee = Employee.objects.create(
-                user=user,
-                manager=manager,
-                employee_id=employee_id,
-                position=position,
-                department=department
+                last_name=last_name,
+                role=role,
+                state=request.POST.get('state', ''),
+                district=request.POST.get('district', ''),
+                block=request.POST.get('block', '') if role == User.BLOCK_EMPLOYEE else ''
             )
 
             messages.success(request, f'Employee {first_name} {last_name} created successfully!')
             return redirect('managerdashboard:employee_list')
 
         except Exception as e:
-            messages.error(request, f'Error creating employee: {str(e)}')
+            error_message = str(e)
+            print(f"Error creating employee: {error_message}")
+
+            if 'UNIQUE constraint failed: accounts_user.email' in error_message:
+                messages.error(request, f'Email {email} already exists. Please use a different email.')
+            # Removed employee_id related error handling
+            else:
+                messages.error(request, f'Error creating employee: {error_message}')
+
+            # Return the form data to repopulate the form
+            return render(request, 'managerdashboard/add_employee.html', {
+                'form_data': request.POST,
+            })
 
     return render(request, 'managerdashboard/add_employee.html')
 

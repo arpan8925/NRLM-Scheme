@@ -1,32 +1,8 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/employee-dashboard.css' %}">
-</head>
-<body>
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h2>Employee Portal</h2>
-            </div>
-            <nav class="sidebar-nav">
-                <ul>
-                    <li class="active"><a href="#"><span>Dashboard</span></a></li>
-                    <li><a href="#"><span>My Forms</span></a></li>
-                    <li><a href="#"><span>Submissions</span></a></li>
-                    <li><a href="#"><span>Profile</span></a></li>
-                </ul>
-            </nav>
-        </aside>
+{% extends 'employeedashboard/base.html' %}
 
-        <!-- Main Content -->
-        <main class="main-content">
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
             <!-- Top Bar -->
             <header class="top-bar">
                 <div class="welcome-text">
@@ -34,7 +10,8 @@
                     <p>Here's your activity overview</p>
                 </div>
                 <div class="user-menu">
-                    <a href="{% url 'login' %}" class="logout-btn">Logout</a>
+                    <span class="user-name">{{ user.get_full_name }}</span>
+                    <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
                 </div>
             </header>
 
@@ -69,7 +46,4 @@
                     <p class="no-submissions">No recent submissions to display</p>
                 </div>
             </section>
-        </main>
-    </div>
-</body>
-</html> 
+{% endblock %}

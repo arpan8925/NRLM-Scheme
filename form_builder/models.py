@@ -4,6 +4,9 @@ from django.conf import settings
 import uuid
 import json
 import os
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class Form(models.Model):
     title = models.CharField(max_length=200)
@@ -30,6 +33,7 @@ class Form(models.Model):
 
 class FormSubmission(models.Model):
     form = models.ForeignKey(Form, on_delete=models.CASCADE, related_name='submissions')
+    employee = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='form_submissions')
     responses = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 

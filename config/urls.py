@@ -19,7 +19,7 @@ from django.urls import path, include
 from django.shortcuts import redirect
 from django.conf import settings
 from django.conf.urls.static import static
-from accounts.views import login_view
+from accounts.views import login_view, logout_view
 
 def redirect_to_login(request):
     return redirect('login')
@@ -28,8 +28,9 @@ urlpatterns = [
     path('', redirect_to_login, name='root'),
     path('admin/', admin.site.urls),
     path('login/', login_view, name='login'),
+    path('logout/', logout_view, name='logout'),
     path('manager/', include('managerdashboard.urls', namespace='managerdashboard')),
-    path('employee/', include('employeedashboard.urls')),
+    path('employee/', include('employeedashboard.urls', namespace='employeedashboard')),
     path('forms/', include('form_builder.urls', namespace='form_builder')),
 ]
 
