@@ -1,8 +1,9 @@
+// Global variable to track the selected field
+let selectedField = null;
+
 document.addEventListener('DOMContentLoaded', function() {
     const formCanvas = document.getElementById('formCanvas');
     const widgets = document.querySelectorAll('.widget-item');
-    const fieldSettings = document.getElementById('fieldSettings');
-    let selectedField = null;
 
     // Initialize drag and drop
     widgets.forEach(widget => {
@@ -12,6 +13,78 @@ document.addEventListener('DOMContentLoaded', function() {
 
     formCanvas.addEventListener('dragover', handleDragOver);
     formCanvas.addEventListener('drop', handleDrop);
+
+    // Add event delegation for field selection and delete buttons
+    document.addEventListener('click', function(e) {
+        // Handle delete button clicks
+        if (e.target.classList.contains('delete-field-btn')) {
+            console.log('Delete button clicked');
+            e.stopPropagation(); // Prevent event bubbling
+            const field = e.target.closest('.form-field');
+            console.log('Field found:', field);
+
+            if (field) {
+                // Check if this is the selected field
+                const isSelected = field.classList.contains('selected');
+                console.log('Is selected field:', isSelected);
+
+                // Remove the field
+                field.remove();
+                console.log('Field removed');
+
+                // Clear field settings if this was the selected field
+                if (isSelected) {
+                    selectedField = null;
+                    const fieldSettings = document.getElementById('fieldSettings');
+                    console.log('Field settings element:', fieldSettings);
+
+                    if (fieldSettings) {
+                        // Force a complete reset of the field settings panel
+                        fieldSettings.innerHTML = '';
+                        setTimeout(() => {
+                            fieldSettings.innerHTML = '<h3>Field Settings</h3><p class="no-field-selected">Select a field to edit its properties</p>';
+                            console.log('Field settings cleared from global click handler');
+                        }, 0);
+                    }
+                }
+            }
+        }
+        // Handle field selection (but not when clicking on delete button or other controls)
+        else {
+            const field = e.target.closest('.form-field');
+            if (field && !e.target.closest('.field-action-btn') && !e.target.closest('.add-option-btn')) {
+                console.log('Field clicked for selection:', field);
+                selectField(field);
+            }
+        }
+
+    // Check if form canvas is empty
+    if (document.querySelectorAll('.form-field').length === 0) {
+        const emptyState = `
+            <div class="empty-canvas">
+                <p>Drag and drop form elements here</p>
+                <div class="quick-add-container">
+                    <h4>Quick Add Common Fields</h4>
+                    <div class="quick-add-grid">
+                        <button type="button" class="quick-add-btn" data-type="text">Text Field</button>
+                        <button type="button" class="quick-add-btn" data-type="email">Email Field</button>
+                        <button type="button" class="quick-add-btn" data-type="select">Dropdown</button>
+                        <button type="button" class="quick-add-btn" data-type="radio">Radio Buttons</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('formCanvas').innerHTML = emptyState;
+
+        // Re-add event listeners to quick add buttons
+        document.querySelectorAll('.quick-add-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const fieldType = e.currentTarget.dataset.type;
+                addFormField(fieldType);
+            });
+        });
+    }
+});
 
     // Quick add buttons
     document.querySelectorAll('.quick-add-btn').forEach(btn => {
@@ -175,7 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
         deleteBtn.type = 'button';
         deleteBtn.className = 'delete-field-btn';
         deleteBtn.innerHTML = '&times;';
-        deleteBtn.onclick = () => field.remove();
+        // No onclick handler - using event delegation instead
         field.appendChild(deleteBtn);
 
         return field;
@@ -195,8 +268,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const labelInput = field.querySelector('.field-label-input');
         const requiredCheckbox = field.querySelector('.field-required');
         const previewInput = field.querySelector('.field-preview-input');
+        const fieldSettingsPanel = document.getElementById('fieldSettings');
 
-        fieldSettings.innerHTML = `
+        fieldSettingsPanel.innerHTML = `
             <h3>Field Settings</h3>
             <div class="settings-group">
                 <label>Field Label</label>
@@ -246,19 +320,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (settingLabel) {
             settingLabel.addEventListener('input', function() {
-                updateFieldSetting(this, 'label');
+                window.updateFieldSetting(this, 'label');
             });
         }
 
         if (settingRequired) {
             settingRequired.addEventListener('change', function() {
-                updateFieldSetting(this, 'required');
+                window.updateFieldSetting(this, 'required');
             });
         }
 
         if (settingPlaceholder) {
             settingPlaceholder.addEventListener('input', function() {
-                updateFieldSetting(this, 'placeholder');
+                window.updateFieldSetting(this, 'placeholder');
             });
         }
 
@@ -897,23 +971,16 @@ function moveField(btn, direction) {
     }
 }
 
+// This function is kept for backward compatibility but delegates to the click handler
 function deleteField(btn) {
-    const field = btn.closest('.form-field');
-    field.remove();
-
-    if (document.querySelectorAll('.form-field').length === 0) {
-        const emptyState = `
-            <div class="empty-canvas">
-                <p>Drag and drop form elements here</p>
-                <div class="quick-add-container">
-                    <h4>Quick Add Common Fields</h4>
-                    <div class="quick-add-grid">
-                        <!-- Quick add buttons here -->
-                    </div>
-                </div>
-            </div>
-        `;
-        document.getElementById('formCanvas').innerHTML = emptyState;
+    // Simulate a click on the delete button
+    if (btn) {
+        const deleteBtn = btn.querySelector('.delete-field-btn') || btn.closest('.delete-field-btn');
+        if (deleteBtn) {
+            deleteBtn.click();
+        } else {
+            console.error('Delete button not found');
+        }
     }
 }
 
