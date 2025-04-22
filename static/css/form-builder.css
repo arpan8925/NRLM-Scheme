@@ -897,6 +897,55 @@
     padding: 1.5rem;
 }
 
+/* API Info Styles */
+.api-info {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: #242b3d;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: #9ca3af;
+}
+
+.api-info-settings {
+    background: #242b3d;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+}
+
+.api-info-settings p {
+    margin: 0.5rem 0;
+    color: #9ca3af;
+    font-size: 0.9rem;
+}
+
+.api-info-settings code {
+    display: block;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    background: #1a1f2e;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #e2e8f0;
+    word-break: break-all;
+    white-space: pre-wrap;
+}
+
+.api-info-preview {
+    margin-top: 0.5rem;
+    font-style: italic;
+    color: #9ca3af;
+    font-size: 0.85rem;
+}
+
+.dynamic-dropdown {
+    background-color: #1a1f2e;
+    color: #64748b;
+    font-style: italic;
+}
+
 .field-settings-content h3 {
     color: #e2e8f0;
     font-size: 1.25rem;

@@ -14,18 +14,20 @@
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
 
+    .form-header {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
     .form-title {
         font-size: 1.875rem;
         font-weight: 600;
         color: #F3F4F6;
-        margin-bottom: 1.5rem;
-        text-align: center;
+        margin-bottom: 0.5rem;
     }
 
     .form-description {
         color: #9CA3AF;
-        margin-bottom: 2rem;
-        text-align: center;
     }
 
     .form-field {
@@ -120,15 +122,34 @@
         outline: none;
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4);
     }
+
+    .back-link {
+        display: inline-block;
+        margin-top: 1rem;
+        color: #9CA3AF;
+        text-decoration: none;
+    }
+
+    .back-link:hover {
+        color: #F3F4F6;
+        text-decoration: underline;
+    }
+
+    .dynamic-dropdown {
+        background-color: #374151;
+        color: #E5E7EB;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="form-container">
-    <h1 class="form-title">{{ form.title }}</h1>
-    {% if form.description %}
-    <p class="form-description">{{ form.description }}</p>
-    {% endif %}
+    <div class="form-header">
+        <h1 class="form-title">{{ form.title }}</h1>
+        {% if form.description %}
+        <p class="form-description">{{ form.description }}</p>
+        {% endif %}
+    </div>
 
     <form method="post" action="{% url 'form_builder:submit_form' form.slug %}" enctype="multipart/form-data">
         {% csrf_token %}
@@ -202,11 +223,156 @@
                 {% if field.accept %}accept="{{ field.accept }}"{% endif %}
                 {% if field.required %}required{% endif %}
             >
+            {% elif field.type == 'village_list' or field.type == 'shg_list' or field.type == 'vo_list' or field.type == 'clf_list' %}
+            <select
+                name="field_{{ forloop.counter }}"
+                class="field-input dynamic-dropdown"
+                data-field-type="{{ field.type }}"
+                {% if field.required %}required{% endif %}
+            >
+                <option value="">Loading options...</option>
+            </select>
             {% endif %}
         </div>
         {% endfor %}
 
         <button type="submit" class="submit-button">Submit</button>
     </form>
+
+    <a href="javascript:history.back()" class="back-link">← Go back</a>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize dynamic dropdowns
+        const dynamicDropdowns = document.querySelectorAll('.dynamic-dropdown');
+
+        if (dynamicDropdowns.length > 0) {
+            // Fetch user location data
+            fetch('/forms/api/user-location/')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch user location data');
+                    }
+                    return response.json();
+                })
+                .then(locationData => {
+                    // Process each dynamic dropdown
+                    dynamicDropdowns.forEach(dropdown => {
+                        const fieldType = dropdown.getAttribute('data-field-type');
+
+                        if (fieldType === 'village_list') {
+                            // Fetch villages using user's location
+                            fetch('/forms/api/villages/')
+                                .then(response => response.json())
+                                .then(villages => {
+                                    // Check if we have a list of panchayats with nested villages
+                                    if (villages.length > 0 && villages[0].villagelist) {
+                                        // Process nested village structure
+                                        populateNestedVillageDropdown(dropdown, villages);
+                                    } else {
+                                        // Fallback to direct village list
+                                        populateDropdown(dropdown, villages, 'village_name_en', 'village_id');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching villages:', error);
+                                    dropdown.innerHTML = '<option value="">Failed to load villages</option>';
+                                });
+                        } else if (fieldType === 'shg_list') {
+                            // Fetch SHGs using user's location
+                            fetch('/forms/api/shgs/')
+                                .then(response => response.json())
+                                .then(shgs => {
+                                    populateDropdown(dropdown, shgs, 'shg_name', 'shg_id');
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching SHGs:', error);
+                                    dropdown.innerHTML = '<option value="">Failed to load SHGs</option>';
+                                });
+                        } else if (fieldType === 'vo_list') {
+                            // Fetch VOs using user's location
+                            fetch('/forms/api/vos/')
+                                .then(response => response.json())
+                                .then(vos => {
+                                    populateDropdown(dropdown, vos, 'vo_name', 'vo_id');
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching VOs:', error);
+                                    dropdown.innerHTML = '<option value="">Failed to load VOs</option>';
+                                });
+                        } else if (fieldType === 'clf_list') {
+                            // Fetch CLFs using user's location
+                            fetch('/forms/api/clfs/')
+                                .then(response => response.json())
+                                .then(clfs => {
+                                    populateDropdown(dropdown, clfs, 'clf_name', 'clf_id');
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching CLFs:', error);
+                                    dropdown.innerHTML = '<option value="">Failed to load CLFs</option>';
+                                });
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching user location data:', error);
+                    dynamicDropdowns.forEach(dropdown => {
+                        dropdown.innerHTML = '<option value="">Failed to load data</option>';
+                    });
+                });
+        }
+
+        // Helper function to populate dropdowns
+        function populateDropdown(dropdown, items, nameField, idField) {
+            // Clear existing options
+            dropdown.innerHTML = '<option value="">Select an option</option>';
+
+            // Add new options
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item[idField] || item.id;
+                option.textContent = item[nameField] || item.name;
+                dropdown.appendChild(option);
+            });
+        }
+
+        // Helper function to populate village dropdowns with nested structure
+        function populateNestedVillageDropdown(dropdown, panchayats) {
+            // Clear existing options
+            dropdown.innerHTML = '<option value="">Select a village</option>';
+
+            // Process each panchayat
+            panchayats.forEach(panchayat => {
+                if (panchayat.villagelist && panchayat.villagelist.length > 0) {
+                    // Create an optgroup for the panchayat if it has multiple villages
+                    let optgroup = null;
+                    if (panchayat.villagelist.length > 1) {
+                        optgroup = document.createElement('optgroup');
+                        optgroup.label = panchayat.panchayat_name_en;
+                        dropdown.appendChild(optgroup);
+                    }
+
+                    // Add each village in the panchayat
+                    panchayat.villagelist.forEach(village => {
+                        const option = document.createElement('option');
+                        // Use lowercase village name as value
+                        option.value = village.villageNameEnglish.toLowerCase();
+                        // Use proper case for display text
+                        option.textContent = village.villageNameEnglish;
+
+                        // Add to optgroup if it exists, otherwise directly to select
+                        if (optgroup) {
+                            optgroup.appendChild(option);
+                        } else {
+                            dropdown.appendChild(option);
+                        }
+                    });
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

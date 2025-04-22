@@ -15,4 +15,4 @@ urlpatterns = [
     path('forms/edit/<slug:slug>/', views.edit_form, name='edit_form'),
     path('forms/duplicate/<slug:slug>/', views.duplicate_form, name='duplicate_form'),
     path('forms/delete/<slug:slug>/', views.delete_form, name='delete_form'),
-] 
+]

@@ -1,7 +1,95 @@
-// Global variable to track the selected field
+// Global variables
 let selectedField = null;
+let userLocationData = null;
+
+// Function to fetch user location data
+async function fetchUserLocationData() {
+    try {
+        const response = await fetch('/forms/api/user-location/');
+        if (!response.ok) {
+            throw new Error(`Failed to fetch user location: ${response.status}`);
+        }
+        userLocationData = await response.json();
+        console.log('User location data:', userLocationData);
+
+        // Format IDs with leading zeros if needed
+        if (userLocationData.state_id && typeof userLocationData.state_id === 'string' && userLocationData.state_id.length === 1) {
+            userLocationData.state_id = '0' + userLocationData.state_id;
+        }
+        if (userLocationData.district_id && typeof userLocationData.district_id === 'string' && userLocationData.district_id.length === 1) {
+            userLocationData.district_id = '0' + userLocationData.district_id;
+        }
+        if (userLocationData.block_id && typeof userLocationData.block_id === 'string' && userLocationData.block_id.length === 1) {
+            userLocationData.block_id = '0' + userLocationData.block_id;
+        }
+
+        console.log('Formatted user location data:', userLocationData);
+        return userLocationData;
+    } catch (error) {
+        console.error('Error fetching user location data:', error);
+        return null;
+    }
+}
+
+// Function to fetch villages using user's location
+async function fetchVillages() {
+    try {
+        const response = await fetch('/forms/api/villages/');
+        if (!response.ok) {
+            throw new Error(`Failed to fetch villages: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching villages:', error);
+        return [];
+    }
+}
+
+// Function to fetch SHGs using user's location
+async function fetchSHGs() {
+    try {
+        const response = await fetch('/forms/api/shgs/');
+        if (!response.ok) {
+            throw new Error(`Failed to fetch SHGs: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching SHGs:', error);
+        return [];
+    }
+}
+
+// Function to fetch VOs using user's location
+async function fetchVOs() {
+    try {
+        const response = await fetch('/forms/api/vos/');
+        if (!response.ok) {
+            throw new Error(`Failed to fetch VOs: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching VOs:', error);
+        return [];
+    }
+}
+
+// Function to fetch CLFs using user's location
+async function fetchCLFs() {
+    try {
+        const response = await fetch('/forms/api/clfs/');
+        if (!response.ok) {
+            throw new Error(`Failed to fetch CLFs: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching CLFs:', error);
+        return [];
+    }
+}
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Fetch user location data when the page loads
+    fetchUserLocationData();
     const formCanvas = document.getElementById('formCanvas');
     const widgets = document.querySelectorAll('.widget-item');
 
@@ -239,6 +327,264 @@ document.addEventListener('DOMContentLoaded', function() {
                 fieldPreview.appendChild(optionsContainer);
                 fieldPreview.appendChild(addOptionBtn);
                 break;
+
+            case 'village_list':
+                const villageSelect = document.createElement('select');
+                villageSelect.className = 'field-preview-input dynamic-dropdown';
+                villageSelect.disabled = true; // Disabled in preview mode
+
+                const villageDefaultOption = document.createElement('option');
+                villageDefaultOption.value = '';
+                villageDefaultOption.textContent = 'Select a Village (Will load dynamically)';
+                villageSelect.appendChild(villageDefaultOption);
+
+                // Add API info as data attributes
+                villageSelect.setAttribute('data-api-type', 'village');
+                villageSelect.setAttribute('data-api-url', '/forms/api/villages/');
+
+                fieldPreview.appendChild(villageSelect);
+
+                // Add API info note
+                const villageApiInfo = document.createElement('div');
+                villageApiInfo.className = 'api-info';
+                villageApiInfo.innerHTML = '<small>Data will be loaded from Village API based on user\'s State, District, and Block</small>';
+                fieldPreview.appendChild(villageApiInfo);
+
+                // Load villages if user location data is available
+                if (userLocationData && userLocationData.state_id && userLocationData.district_id && userLocationData.block_id) {
+                    // Show loading indicator
+                    villageApiInfo.innerHTML = '<small>Loading villages...</small>';
+
+                    // Fetch villages
+                    fetchVillages()
+                        .then(villages => {
+                            // Clear existing options except the first one
+                            while (villageSelect.options.length > 1) {
+                                villageSelect.remove(1);
+                            }
+
+                            // Add villages to the dropdown
+                            // Check if we have a list of panchayats with nested villages
+                            if (villages.length > 0 && villages[0].villagelist) {
+                                // Process nested village structure
+                                villages.forEach(panchayat => {
+                                    if (panchayat.villagelist && panchayat.villagelist.length > 0) {
+                                        // Create an optgroup for the panchayat if it has multiple villages
+                                        let optgroup = null;
+                                        if (panchayat.villagelist.length > 1) {
+                                            optgroup = document.createElement('optgroup');
+                                            optgroup.label = panchayat.panchayat_name_en;
+                                            villageSelect.appendChild(optgroup);
+                                        }
+
+                                        // Add each village in the panchayat
+                                        panchayat.villagelist.forEach(village => {
+                                            const option = document.createElement('option');
+                                            // Use lowercase village name as value
+                                            option.value = village.villageNameEnglish.toLowerCase();
+                                            // Use proper case for display text
+                                            option.textContent = village.villageNameEnglish;
+
+                                            // Add to optgroup if it exists, otherwise directly to select
+                                            if (optgroup) {
+                                                optgroup.appendChild(option);
+                                            } else {
+                                                villageSelect.appendChild(option);
+                                            }
+                                        });
+                                    }
+                                });
+                            } else {
+                                // Fallback to direct village list if structure is different
+                                villages.forEach(village => {
+                                    const option = document.createElement('option');
+                                    if (village.villageNameEnglish) {
+                                        // New API format
+                                        option.value = village.villageNameEnglish.toLowerCase();
+                                        option.textContent = village.villageNameEnglish;
+                                    } else {
+                                        // Old API format
+                                        option.value = (village.village_name_en || village.name || '').toLowerCase();
+                                        option.textContent = village.village_name_en || village.name || '';
+                                    }
+                                    villageSelect.appendChild(option);
+                                });
+                            }
+
+                            // Update API info note
+                            villageApiInfo.innerHTML = `<small>Loaded ${villages.length} villages from API</small>`;
+                        })
+                        .catch(error => {
+                            console.error('Error loading villages:', error);
+                            villageApiInfo.innerHTML = '<small>Error loading villages. Please try again.</small>';
+                        });
+                }
+                break;
+
+            case 'shg_list':
+                const shgSelect = document.createElement('select');
+                shgSelect.className = 'field-preview-input dynamic-dropdown';
+                shgSelect.disabled = true; // Disabled in preview mode
+
+                const shgDefaultOption = document.createElement('option');
+                shgDefaultOption.value = '';
+                shgDefaultOption.textContent = 'Select an SHG (Will load dynamically)';
+                shgSelect.appendChild(shgDefaultOption);
+
+                // Add API info as data attributes
+                shgSelect.setAttribute('data-api-type', 'shg');
+                shgSelect.setAttribute('data-api-url', '/forms/api/shgs/');
+                shgSelect.setAttribute('data-api-key', '18034065a7d2f7114df06cd7e6388ce677e536514fccd1e923fef0453ff26cbf');
+                shgSelect.setAttribute('data-api-client', 'in.co.glpc');
+
+                fieldPreview.appendChild(shgSelect);
+
+                // Add API info note
+                const shgApiInfo = document.createElement('div');
+                shgApiInfo.className = 'api-info';
+                shgApiInfo.innerHTML = '<small>Data will be loaded from SHG API based on user\'s State and Block</small>';
+                fieldPreview.appendChild(shgApiInfo);
+
+                // Load SHGs if user location data is available
+                if (userLocationData && userLocationData.state_id && userLocationData.block_id) {
+                    // Show loading indicator
+                    shgApiInfo.innerHTML = '<small>Loading SHGs...</small>';
+
+                    // Fetch SHGs
+                    fetchSHGs()
+                        .then(shgs => {
+                            // Clear existing options except the first one
+                            while (shgSelect.options.length > 1) {
+                                shgSelect.remove(1);
+                            }
+
+                            // Add SHGs to the dropdown
+                            shgs.forEach(shg => {
+                                const option = document.createElement('option');
+                                option.value = shg.shg_id || shg.id;
+                                option.textContent = shg.shg_name || shg.name;
+                                shgSelect.appendChild(option);
+                            });
+
+                            // Update API info note
+                            shgApiInfo.innerHTML = `<small>Loaded ${shgs.length} SHGs from API</small>`;
+                        })
+                        .catch(error => {
+                            console.error('Error loading SHGs:', error);
+                            shgApiInfo.innerHTML = '<small>Error loading SHGs. Please try again.</small>';
+                        });
+                }
+                break;
+
+            case 'vo_list':
+                const voSelect = document.createElement('select');
+                voSelect.className = 'field-preview-input dynamic-dropdown';
+                voSelect.disabled = true; // Disabled in preview mode
+
+                const voDefaultOption = document.createElement('option');
+                voDefaultOption.value = '';
+                voDefaultOption.textContent = 'Select a VO (Will load dynamically)';
+                voSelect.appendChild(voDefaultOption);
+
+                // Add API info as data attributes
+                voSelect.setAttribute('data-api-type', 'vo');
+                voSelect.setAttribute('data-api-url', '/forms/api/vos/');
+                voSelect.setAttribute('data-api-key', '18034065a7d2f7114df06cd7e6388ce677e536514fccd1e923fef0453ff26cbf');
+                voSelect.setAttribute('data-api-client', 'in.co.glpc');
+
+                fieldPreview.appendChild(voSelect);
+
+                // Add API info note
+                const voApiInfo = document.createElement('div');
+                voApiInfo.className = 'api-info';
+                voApiInfo.innerHTML = '<small>Data will be loaded from VO API based on user\'s State and Block</small>';
+                fieldPreview.appendChild(voApiInfo);
+
+                // Load VOs if user location data is available
+                if (userLocationData && userLocationData.state_id && userLocationData.block_id) {
+                    // Show loading indicator
+                    voApiInfo.innerHTML = '<small>Loading VOs...</small>';
+
+                    // Fetch VOs
+                    fetchVOs()
+                        .then(vos => {
+                            // Clear existing options except the first one
+                            while (voSelect.options.length > 1) {
+                                voSelect.remove(1);
+                            }
+
+                            // Add VOs to the dropdown
+                            vos.forEach(vo => {
+                                const option = document.createElement('option');
+                                option.value = vo.vo_id || vo.id;
+                                option.textContent = vo.vo_name || vo.name;
+                                voSelect.appendChild(option);
+                            });
+
+                            // Update API info note
+                            voApiInfo.innerHTML = `<small>Loaded ${vos.length} VOs from API</small>`;
+                        })
+                        .catch(error => {
+                            console.error('Error loading VOs:', error);
+                            voApiInfo.innerHTML = '<small>Error loading VOs. Please try again.</small>';
+                        });
+                }
+                break;
+
+            case 'clf_list':
+                const clfSelect = document.createElement('select');
+                clfSelect.className = 'field-preview-input dynamic-dropdown';
+                clfSelect.disabled = true; // Disabled in preview mode
+
+                const clfDefaultOption = document.createElement('option');
+                clfDefaultOption.value = '';
+                clfDefaultOption.textContent = 'Select a CLF (Will load dynamically)';
+                clfSelect.appendChild(clfDefaultOption);
+
+                // Add API info as data attributes
+                clfSelect.setAttribute('data-api-type', 'clf');
+                clfSelect.setAttribute('data-api-url', '/forms/api/clfs/');
+                clfSelect.setAttribute('data-api-key', '18034065a7d2f7114df06cd7e6388ce677e536514fccd1e923fef0453ff26cbf');
+                clfSelect.setAttribute('data-api-client', 'in.co.glpc');
+
+                fieldPreview.appendChild(clfSelect);
+
+                // Add API info note
+                const clfApiInfo = document.createElement('div');
+                clfApiInfo.className = 'api-info';
+                clfApiInfo.innerHTML = '<small>Data will be loaded from CLF API based on user\'s State and Block</small>';
+                fieldPreview.appendChild(clfApiInfo);
+
+                // Load CLFs if user location data is available
+                if (userLocationData && userLocationData.state_id && userLocationData.block_id) {
+                    // Show loading indicator
+                    clfApiInfo.innerHTML = '<small>Loading CLFs...</small>';
+
+                    // Fetch CLFs
+                    fetchCLFs()
+                        .then(clfs => {
+                            // Clear existing options except the first one
+                            while (clfSelect.options.length > 1) {
+                                clfSelect.remove(1);
+                            }
+
+                            // Add CLFs to the dropdown
+                            clfs.forEach(clf => {
+                                const option = document.createElement('option');
+                                option.value = clf.clf_id || clf.id;
+                                option.textContent = clf.clf_name || clf.name;
+                                clfSelect.appendChild(option);
+                            });
+
+                            // Update API info note
+                            clfApiInfo.innerHTML = `<small>Loaded ${clfs.length} CLFs from API</small>`;
+                        })
+                        .catch(error => {
+                            console.error('Error loading CLFs:', error);
+                            clfApiInfo.innerHTML = '<small>Error loading CLFs. Please try again.</small>';
+                        });
+                }
+                break;
         }
 
         field.appendChild(fieldPreview);
@@ -307,6 +653,37 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         `).join('')}
                         <button type="button" class="btn-add-option" id="addOption">+ Add Option</button>
+                    </div>
+                </div>
+            ` : ''}
+            ${['village_list', 'shg_list', 'vo_list', 'clf_list'].includes(type) ? `
+                <div class="settings-group">
+                    <label>API Information</label>
+                    <div class="api-info-settings">
+                        ${type === 'village_list' ? `
+                            <p>This field will load village data from:</p>
+                            <code>/forms/api/villages/</code>
+                            <p>Data will be automatically loaded based on the user's location.</p>
+                            <p><strong>Note:</strong> The user must have state, district, and block information in their profile.</p>
+                        ` : ''}
+                        ${type === 'shg_list' ? `
+                            <p>This field will load SHG data from:</p>
+                            <code>/forms/api/shgs/</code>
+                            <p>Data will be automatically loaded based on the user's location.</p>
+                            <p><strong>Note:</strong> The user must have state and block information in their profile.</p>
+                        ` : ''}
+                        ${type === 'vo_list' ? `
+                            <p>This field will load VO data from:</p>
+                            <code>/forms/api/vos/</code>
+                            <p>Data will be automatically loaded based on the user's location.</p>
+                            <p><strong>Note:</strong> The user must have state and block information in their profile.</p>
+                        ` : ''}
+                        ${type === 'clf_list' ? `
+                            <p>This field will load CLF data from:</p>
+                            <code>/forms/api/clfs/</code>
+                            <p>Data will be automatically loaded based on the user's location.</p>
+                            <p><strong>Note:</strong> The user must have state and block information in their profile.</p>
+                        ` : ''}
                     </div>
                 </div>
             ` : ''}
@@ -458,6 +835,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         .filter(value => value.trim() !== '');
                     if (options.length > 0) {
                         fieldData.options = options;
+                    }
+                }
+            }
+
+            // Handle dynamic dropdown fields
+            if (['village_list', 'shg_list', 'vo_list', 'clf_list'].includes(type)) {
+                const dropdown = field.querySelector('.dynamic-dropdown');
+                if (dropdown) {
+                    // Add API information to the field data
+                    fieldData.apiType = dropdown.getAttribute('data-api-type');
+                    fieldData.apiUrl = dropdown.getAttribute('data-api-url');
+
+                    // Add authentication info for SHG, VO, and CLF lists
+                    if (['shg_list', 'vo_list', 'clf_list'].includes(type)) {
+                        fieldData.apiKey = dropdown.getAttribute('data-api-key');
+                        fieldData.apiClient = dropdown.getAttribute('data-api-client');
                     }
                 }
             }
@@ -671,6 +1064,51 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <span>${opt}</span>
                             </label>
                         `).join('')}
+                    </div>
+                `;
+
+            case 'file':
+                return `
+                    <input type="file" class="form-input" accept="${field.accept || '*/*'}">
+                `;
+
+            case 'village_list':
+                return `
+                    <select class="form-input dynamic-dropdown" disabled>
+                        <option value="">Select a Village (Will load dynamically)</option>
+                    </select>
+                    <div class="api-info-preview">
+                        <small>Village data will be loaded dynamically based on user's location</small>
+                    </div>
+                `;
+
+            case 'shg_list':
+                return `
+                    <select class="form-input dynamic-dropdown" disabled>
+                        <option value="">Select an SHG (Will load dynamically)</option>
+                    </select>
+                    <div class="api-info-preview">
+                        <small>SHG data will be loaded dynamically based on user's location</small>
+                    </div>
+                `;
+
+            case 'vo_list':
+                return `
+                    <select class="form-input dynamic-dropdown" disabled>
+                        <option value="">Select a VO (Will load dynamically)</option>
+                    </select>
+                    <div class="api-info-preview">
+                        <small>VO data will be loaded dynamically based on user's location</small>
+                    </div>
+                `;
+
+            case 'clf_list':
+                return `
+                    <select class="form-input dynamic-dropdown" disabled>
+                        <option value="">Select a CLF (Will load dynamically)</option>
+                    </select>
+                    <div class="api-info-preview">
+                        <small>CLF data will be loaded dynamically based on user's location</small>
                     </div>
                 `;
 
@@ -1060,6 +1498,56 @@ function generateFieldHtml(field) {
                         </label>
                     `).join('')}
                 </div>`;
+
+        case 'village_list':
+            return `
+                <select name="${field.label}"
+                        class="form-select dynamic-dropdown"
+                        data-api-type="village"
+                        data-api-url="/forms/api/villages/"
+                        ${field.required ? 'required' : ''}>
+                    <option value="">Select a Village</option>
+                    <!-- Options will be loaded dynamically -->
+                </select>`;
+
+        case 'shg_list':
+            return `
+                <select name="${field.label}"
+                        class="form-select dynamic-dropdown"
+                        data-api-type="shg"
+                        data-api-url="/forms/api/shgs/"
+                        data-api-key="18034065a7d2f7114df06cd7e6388ce677e536514fccd1e923fef0453ff26cbf"
+                        data-api-client="in.co.glpc"
+                        ${field.required ? 'required' : ''}>
+                    <option value="">Select an SHG</option>
+                    <!-- Options will be loaded dynamically -->
+                </select>`;
+
+        case 'vo_list':
+            return `
+                <select name="${field.label}"
+                        class="form-select dynamic-dropdown"
+                        data-api-type="vo"
+                        data-api-url="/forms/api/vos/"
+                        data-api-key="18034065a7d2f7114df06cd7e6388ce677e536514fccd1e923fef0453ff26cbf"
+                        data-api-client="in.co.glpc"
+                        ${field.required ? 'required' : ''}>
+                    <option value="">Select a VO</option>
+                    <!-- Options will be loaded dynamically -->
+                </select>`;
+
+        case 'clf_list':
+            return `
+                <select name="${field.label}"
+                        class="form-select dynamic-dropdown"
+                        data-api-type="clf"
+                        data-api-url="/forms/api/clfs/"
+                        data-api-key="18034065a7d2f7114df06cd7e6388ce677e536514fccd1e923fef0453ff26cbf"
+                        data-api-client="in.co.glpc"
+                        ${field.required ? 'required' : ''}>
+                    <option value="">Select a CLF</option>
+                    <!-- Options will be loaded dynamically -->
+                </select>`;
 
         default:
             return '';

@@ -229,15 +229,36 @@
             document.getElementById('district-loading').style.display = 'block';
             districtSelect.disabled = true;
 
-            const response = await fetch(`https://cdn.lokos.in/lokos-masterdata/state/${stateId}.json`);
+            // Format state ID with leading zero if it's a single digit
+            const formattedStateId = stateId.length === 1 ? `0${stateId}` : stateId;
+            console.log('Fetching districts for state ID:', formattedStateId);
+
+            const response = await fetch(`https://cdn.lokos.in/lokos-masterdata/state/${formattedStateId}.json`);
             const districts = await response.json();
 
-            districts.forEach(district => {
-                const option = document.createElement('option');
-                option.value = district.district_id;
-                option.textContent = `${district.district_name_en} (${district.district_short_name_en})`;
-                districtSelect.appendChild(option);
-            });
+            // Check if districts is an array or an object
+            if (Array.isArray(districts)) {
+                // Handle array format
+                districts.forEach(district => {
+                    const option = document.createElement('option');
+                    option.value = district.district_id;
+                    option.textContent = district.district_short_name_en ?
+                        `${district.district_name_en} (${district.district_short_name_en})` :
+                        district.district_name_en;
+                    districtSelect.appendChild(option);
+                });
+            } else {
+                // Handle object format (older API response format)
+                for (const districtId in districts) {
+                    const district = districts[districtId];
+                    const option = document.createElement('option');
+                    option.value = districtId;
+                    option.textContent = district.district_short_name_en ?
+                        `${district.district_name_en} (${district.district_short_name_en})` :
+                        district.district_name_en;
+                    districtSelect.appendChild(option);
+                }
+            }
 
             districtSelect.disabled = false;
             document.getElementById('district-loading').style.display = 'none';
@@ -264,15 +285,33 @@
             document.getElementById('block-loading').style.display = 'block';
             blockSelect.disabled = true;
 
-            const response = await fetch(`https://cdn.lokos.in/lokos-masterdata/state/${stateId}/district/${districtId}.json`);
+            // Format state ID and district ID with leading zeros if they're single digits
+            const formattedStateId = stateId.length === 1 ? `0${stateId}` : stateId;
+            const formattedDistrictId = districtId.length === 1 ? `0${districtId}` : districtId;
+            console.log('Fetching blocks for state ID:', formattedStateId, 'and district ID:', formattedDistrictId);
+
+            const response = await fetch(`https://cdn.lokos.in/lokos-masterdata/state/${formattedStateId}/district/${formattedDistrictId}.json`);
             const blocks = await response.json();
 
-            blocks.forEach(block => {
-                const option = document.createElement('option');
-                option.value = block.block_id;
-                option.textContent = block.block_name_en;
-                blockSelect.appendChild(option);
-            });
+            // Check if blocks is an array or an object
+            if (Array.isArray(blocks)) {
+                // Handle array format
+                blocks.forEach(block => {
+                    const option = document.createElement('option');
+                    option.value = block.block_id;
+                    option.textContent = block.block_name_en;
+                    blockSelect.appendChild(option);
+                });
+            } else {
+                // Handle object format (older API response format)
+                for (const blockId in blocks) {
+                    const block = blocks[blockId];
+                    const option = document.createElement('option');
+                    option.value = blockId;
+                    option.textContent = block.block_name_en;
+                    blockSelect.appendChild(option);
+                }
+            }
 
             blockSelect.disabled = false;
             document.getElementById('block-loading').style.display = 'none';
