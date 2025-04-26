@@ -306,12 +306,6 @@ def fetch_vos(request, state_code=None, block_id=None):
         state_code = state_code or user.state
         block_id = block_id or user.block
 
-        # Pad state_code to two digits if needed
-        if state_code and isinstance(state_code, int):
-            state_code = f"{state_code:02d}"
-        elif state_code and isinstance(state_code, str) and state_code.isdigit():
-            state_code = state_code.zfill(2)
-
         # Pad block_id to two digits if needed
         if block_id and isinstance(block_id, int):
             block_id = f"{block_id:02d}"
@@ -328,8 +322,18 @@ def fetch_vos(request, state_code=None, block_id=None):
             'X-APISETU-CLIENTID': 'in.co.glpc'
         }
 
+        response = requests.get("https://cdn.lokos.in/lokos-masterdata/statemaster.json")
+        data = response.json()
+        target_state_id = int(state_code)
+        state = next((item for item in data if item["state_id"] == target_state_id), None)
+
+        if state:
+            print(state["state_short_name_en"])
+        else:
+            print(f"No state found with state id {target_state_id}")
+
         response = requests.get(
-            f'https://apisetu.gov.in/mord/lokos/srv/v1/{state_code}/vo/block?block_id={block_id}',
+            f'https://apisetu.gov.in/mord/lokos/srv/v1/{state["state_short_name_en"]}/vo/block?block_id={block_id}',
             headers=headers
         )
 
