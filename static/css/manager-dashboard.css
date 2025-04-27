@@ -55,6 +55,10 @@ body {
     width: calc(100% - var(--sidebar-width));
 }
 
+/* table.dataTable.stripe tbody tr.odd, table.dataTable.display tbody tr.odd {
+    background-color: #f9f9f9;
+} */
+
 .sidebar-header h2 {
     color: var(--primary-color);
     font-size: 1.5rem;

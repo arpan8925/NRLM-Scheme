@@ -438,3 +438,56 @@ def export_form_submissions(request, slug):
     except Exception as e:
         messages.error(request, f'Error exporting submissions: {str(e)}')
         return redirect('managerdashboard:forms_list')
+
+
+@login_required
+@manager_required
+def form_submissions(request, slug):
+    """
+    Display all submissions for a specific form in a tabular format
+    """
+    try:
+        form = Form.objects.get(slug=slug)
+
+        # Check if user has permission to view this form's submissions
+        if not request.user.is_superuser and form.created_by != request.user:
+            messages.error(request, 'You do not have permission to view submissions for this form.')
+            return redirect('managerdashboard:forms_list')
+
+        # Get all submissions for this form
+        submissions = FormSubmission.objects.filter(form=form).order_by('-created_at')
+
+        # Get form fields from the form definition
+        form_fields = json.loads(form.fields) if form.fields else []
+
+        # Extract field labels for table headers
+        field_labels = [field['label'] for field in form_fields]
+
+        # Process submissions data for the table
+        submissions_data = []
+        for submission in submissions:
+            # Parse the JSON responses
+            responses = json.loads(submission.responses)
+
+            # Create a submission data object
+            submission_data = {
+                'id': submission.id,
+                'employee': submission.employee.email if submission.employee else 'Anonymous',
+                'created_at': submission.created_at,
+                'responses': responses
+            }
+
+            submissions_data.append(submission_data)
+
+        context = {
+            'form': form,
+            'field_labels': field_labels,
+            'submissions': submissions_data,
+            'submissions_count': submissions.count(),
+        }
+
+        return render(request, 'managerdashboard/form_submissions.html', context)
+
+    except Form.DoesNotExist:
+        messages.error(request, 'Form not found.')
+        return redirect('managerdashboard:forms_list')

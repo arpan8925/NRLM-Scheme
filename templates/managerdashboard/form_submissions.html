@@ -1,0 +1,273 @@
+{% extends 'managerdashboard/dashboard.html' %}
+{% load static %}
+{% load form_filters %}
+
+{% block main_content %}
+<div class="submissions-container">
+    <!-- Messages Section -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="page-header">
+        <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            Submissions for: {{ form.title }}
+        </h2>
+        <div class="header-actions">
+            <a href="{% url 'managerdashboard:export_form_submissions' form.slug %}" class="btn-export">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Export as CSV
+            </a>
+            <a href="{% url 'managerdashboard:forms_list' %}" class="btn-back">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Back to Forms
+            </a>
+        </div>
+    </div>
+
+    <div class="submissions-stats">
+        <div class="stat-pill">
+            <span class="stat-value">{{ submissions_count }}</span>
+            <span class="stat-label">Total Submissions</span>
+        </div>
+    </div>
+
+    {% if submissions %}
+    <div class="submissions-table-container">
+        <table id="submissionsTable" class="display">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Submitted By</th>
+                    <th>Date</th>
+                    {% for label in field_labels %}
+                    <th>{{ label }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for submission in submissions %}
+                <tr>
+                    <td>{{ submission.id }}</td>
+                    <td>{{ submission.employee }}</td>
+                    <td>{{ submission.created_at|date:"M d, Y H:i" }}</td>
+                    {% for label in field_labels %}
+                    <td>
+                        {% if submission.responses|get_item:label|is_list %}
+                            {{ submission.responses|get_item:label|join:", " }}
+                        {% else %}
+                            {{ submission.responses|get_item:label }}
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="no-submissions">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+        <p>No submissions for this form yet</p>
+        <a href="{% url 'managerdashboard:forms_list' %}" class="btn-back">Back to Forms</a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.submissions-container {
+    padding: 2rem;
+    color: #E5E7EB;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn-export, .btn-back {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.btn-export {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-back {
+    background: #4B5563;
+    color: white;
+}
+
+.submissions-stats {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.stat-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 2rem;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    background: rgba(55, 65, 81, 0.3);
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #E5E7EB;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #9CA3AF;
+}
+
+.submissions-table-container {
+    background: rgba(55, 65, 81, 0.3);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    overflow-x: auto;
+}
+
+.no-submissions {
+    text-align: center;
+    padding: 4rem 2rem;
+    border: 1px dashed #374151;
+    border-radius: 0.5rem;
+    color: #9CA3AF;
+}
+
+/* DataTables Custom Styling */
+table.dataTable {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-bottom: 1rem;
+    color: #E5E7EB;
+}
+
+table.dataTable thead th {
+    background-color: rgba(55, 65, 81, 0.5);
+    color: #E5E7EB;
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid #4B5563;
+}
+
+table.dataTable tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #4B5563;
+    vertical-align: top;
+}
+
+table.dataTable tbody tr {
+    background-color: rgba(55, 65, 81, 0.2) !important;
+}
+
+table.dataTable tbody tr:hover {
+    background-color: rgba(55, 65, 81, 0.4) !important;
+}
+
+.sorting_1 {
+    background-color: rgba(55, 65, 81, 0.4) !important;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_processing,
+.dataTables_wrapper .dataTables_paginate {
+    color: #E5E7EB !important;
+    margin-bottom: 1rem;
+}
+
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_filter input {
+    background-color: rgba(55, 65, 81, 0.3);
+    border: 1px solid #4B5563;
+    color: #E5E7EB;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: #E5E7EB !important;
+    border: 1px solid #4B5563;
+    background-color: rgba(55, 65, 81, 0.3);
+    border-radius: 0.25rem;
+    margin: 0 0.25rem;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: #3b82f6 !important;
+    color: white !important;
+    border: 1px solid #3b82f6;
+}
+</style>
+
+<!-- Include DataTables CSS and JS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+
+<script>
+// Initialize DataTables
+$(document).ready(function() {
+    $('#submissionsTable').DataTable({
+        responsive: true,
+        order: [[2, 'desc']], // Sort by date column (index 2) in descending order
+        pageLength: 25, // Show 25 entries per page
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        language: {
+            search: "Search submissions:",
+            lengthMenu: "Show _MENU_ submissions per page",
+            info: "Showing _START_ to _END_ of _TOTAL_ submissions",
+            emptyTable: "No submissions available",
+            zeroRecords: "No matching submissions found"
+        }
+    });
+});
+</script>
+{% endblock %}
