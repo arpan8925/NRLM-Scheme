@@ -12,36 +12,25 @@ def is_employee(user):
 @login_required
 @user_passes_test(is_employee)
 def dashboard(request):
-    # Get the user
-    user = request.user
+    # Get total submissions count
+    total_submissions = FormSubmission.objects.filter(employee=request.user).count()
 
-    # Get employee specific stats
-    # Check if the employee field exists in FormSubmission model
-    try:
-        # Count form submissions by this employee
-        total_submissions = FormSubmission.objects.filter(employee=user).count()
+    # Get pending forms count (forms that haven't been submitted by this user)
+    pending_forms = Form.objects.filter(is_published=True).exclude(
+        submissions__employee=request.user
+    ).count()
 
-        # Get published forms that are available to employees
-        available_forms = Form.objects.filter(is_published=True).count()
-
-        # Count completed forms (forms that have been submitted by this employee)
-        completed_forms = total_submissions
-
-        # Pending forms are available forms minus completed forms
-        pending_forms = max(0, available_forms - completed_forms)
-    except Exception as e:
-        # If the migration hasn't been applied yet, use default values
-        total_submissions = 0
-        available_forms = Form.objects.filter(is_published=True).count()
-        completed_forms = 0
-        pending_forms = available_forms
+    # Get completed forms count
+    completed_forms = Form.objects.filter(
+        is_published=True,
+        submissions__employee=request.user
+    ).distinct().count()
 
     context = {
         'total_submissions': total_submissions,
         'pending_forms': pending_forms,
         'completed_forms': completed_forms,
         'user': request.user,
-        'employee': user,
     }
 
     return render(request, 'employeedashboard/dashboard.html', context)
@@ -61,31 +50,9 @@ def my_forms(request):
 
 @login_required
 @user_passes_test(is_employee)
-def view_form(request, slug):
-    # Get the form
-    form = get_object_or_404(Form, slug=slug, is_published=True)
-    form_fields = json.loads(form.fields) if form.fields else []
-
-    context = {
-        'form': form,
-        'form_fields': form_fields,
-        'user': request.user,
-    }
-
-    return render(request, 'employeedashboard/view_form.html', context)
-
-@login_required
-@user_passes_test(is_employee)
 def my_submissions(request):
-    # Get the user
-    user = request.user
-
-    # Get all submissions by this employee
-    try:
-        submissions = FormSubmission.objects.filter(employee=user).order_by('-created_at')
-    except Exception:
-        # If the migration hasn't been applied yet, return an empty queryset
-        submissions = FormSubmission.objects.none()
+    # Get all form submissions for the current user
+    submissions = FormSubmission.objects.filter(employee=request.user).order_by('-submitted_at')
 
     context = {
         'submissions': submissions,
@@ -97,12 +64,22 @@ def my_submissions(request):
 @login_required
 @user_passes_test(is_employee)
 def profile(request):
-    # Get the user
-    user = request.user
+    context = {
+        'user': request.user,
+    }
+    return render(request, 'employeedashboard/profile.html', context)
+
+@login_required
+@user_passes_test(is_employee)
+def view_form(request, slug):
+    # Get the form by slug
+    form = get_object_or_404(Form, slug=slug, is_published=True)
+    form_fields = json.loads(form.fields) if form.fields else []
 
     context = {
-        'employee': user,
+        'form': form,
+        'form_fields': form_fields,
         'user': request.user,
     }
 
-    return render(request, 'employeedashboard/profile.html', context)
+    return render(request, 'form_builder/view_form.html', context)

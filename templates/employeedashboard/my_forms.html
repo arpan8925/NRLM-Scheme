@@ -5,12 +5,8 @@
 {% block content %}
 <div class="top-bar">
     <div class="welcome-text">
-        <h1>My Forms</h1>
-        <p>View and fill out available forms</p>
-    </div>
-    <div class="user-menu">
-        <span class="user-name">{{ user.get_full_name }}</span>
-        <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+        <h1><i class="fas fa-file-alt"></i> My Forms</h1>
+        <p class="subtitle">View and fill out available forms</p>
     </div>
 </div>
 
@@ -19,19 +15,136 @@
         <div class="forms-grid">
             {% for form in forms %}
                 <div class="form-card">
-                    <h3>{{ form.title }}</h3>
-                    <p>{{ form.description|truncatechars:100 }}</p>
-                    <div class="form-meta">
-                        <span class="form-date">Created: {{ form.created_at|date:"M d, Y" }}</span>
+                    <div class="form-icon">
+                        <i class="fas fa-file-alt"></i>
                     </div>
-                    <a href="{% url 'employeedashboard:view_form' form.slug %}" class="view-form-btn">View Form</a>
+                    <div class="form-content">
+                        <h3>{{ form.title }}</h3>
+                        <p>{{ form.description|truncatechars:100 }}</p>
+                        <div class="form-meta">
+                            <span class="form-date">
+                                <i class="far fa-calendar-alt"></i>
+                                Created: {{ form.created_at|date:"M d, Y" }}
+                            </span>
+                        </div>
+                    </div>
+                    <a href="{% url 'form_builder:view_form' form.slug %}" class="view-form-btn">
+                        <i class="fas fa-eye"></i> View Form
+                    </a>
                 </div>
             {% endfor %}
         </div>
     {% else %}
-        <div class="no-forms">
+        <div class="empty-state">
+            <i class="fas fa-file-alt"></i>
             <p>No forms are available at this time.</p>
         </div>
     {% endif %}
 </div>
+
+<style>
+    .forms-container {
+        margin-top: 2rem;
+    }
+
+    .forms-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .form-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .form-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .form-icon {
+        background: var(--primary-color);
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    .form-content {
+        flex: 1;
+    }
+
+    .form-content h3 {
+        color: var(--text-secondary);
+        margin: 0 0 0.5rem 0;
+    }
+
+    .form-content p {
+        color: var(--text-muted);
+        opacity: 0.8;
+        margin: 0 0 1rem 0;
+    }
+
+    .form-meta {
+        margin-top: auto;
+    }
+
+    .form-date {
+        color: var(--text-muted);
+        opacity: 0.7;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .view-form-btn {
+        background: var(--primary-color);
+        color: white;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: background 0.3s ease;
+    }
+
+    .view-form-btn:hover {
+        background: var(--secondary-color);
+    }
+
+    .empty-state {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 3rem;
+        text-align: center;
+        color: var(--text-primary);
+        opacity: 0.7;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .forms-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 {% endblock %}

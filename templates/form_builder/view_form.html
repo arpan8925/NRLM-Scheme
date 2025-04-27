@@ -286,7 +286,7 @@
                             fetch('/forms/api/shgs/')
                                 .then(response => response.json())
                                 .then(shgs => {
-                                    populateDropdown(dropdown, shgs, 'shg_name', 'shg_id');
+                                    populateDropdownWithLowercaseValues(dropdown, shgs, 'shg_name');
                                 })
                                 .catch(error => {
                                     console.error('Error fetching SHGs:', error);
@@ -297,7 +297,7 @@
                             fetch('/forms/api/vos/')
                                 .then(response => response.json())
                                 .then(vos => {
-                                    populateDropdown(dropdown, vos, 'vo_name', 'vo_id');
+                                    populateDropdownWithLowercaseValues(dropdown, vos, 'vo_name');
                                 })
                                 .catch(error => {
                                     console.error('Error fetching VOs:', error);
@@ -308,7 +308,7 @@
                             fetch('/forms/api/clfs/')
                                 .then(response => response.json())
                                 .then(clfs => {
-                                    populateDropdown(dropdown, clfs, 'clf_name', 'clf_id');
+                                    populateDropdownWithLowercaseValues(dropdown, clfs, 'clf_name');
                                 })
                                 .catch(error => {
                                     console.error('Error fetching CLFs:', error);
@@ -335,6 +335,21 @@
                 const option = document.createElement('option');
                 option.value = item[idField] || item.id;
                 option.textContent = item[nameField] || item.name;
+                dropdown.appendChild(option);
+            });
+        }
+
+        // Helper function to populate dropdowns with lowercase values
+        function populateDropdownWithLowercaseValues(dropdown, items, nameField) {
+            // Clear existing options
+            dropdown.innerHTML = '<option value="">Select an option</option>';
+
+            // Add new options
+            items.forEach(item => {
+                const option = document.createElement('option');
+                const displayText = item[nameField] || item.name || '';
+                option.value = displayText.toLowerCase();
+                option.textContent = displayText;
                 dropdown.appendChild(option);
             });
         }

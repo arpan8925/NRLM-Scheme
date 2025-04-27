@@ -1,11 +1,11 @@
 :root {
     --primary-color: #4f46e5;
     --primary-dark: #4338ca;
-    --text-primary: #111827;
-    --text-secondary: #6b7280;
-    --background-lighter: #f9fafb;
-    --border-color: #e5e7eb;
-    --card-background: #ffffff;
+    --text-primary: #ffffff;
+    --text-secondary: #9ca3af;
+    --background-lighter: #1f2937;
+    --border-color: #374151;
+    --card-background: #1f2937;
     --primary-light: #B192FC;
     --accent-color: #F9C846; /* Gold accent */
     --accent-light: #FFDE85;
@@ -97,7 +97,7 @@ body {
 }
 
 .sidebar-nav a:hover:not(.active a) {
-    background-color: var(--background-lighter);
+    background-color: var(--background-darker);
     color: var(--text-primary);
 }
 
@@ -142,7 +142,7 @@ body {
 .theme-toggle {
     background: none;
     border: none;
-    color: var(--text-secondary);
+    color: var(--text-primary);
     cursor: pointer;
     width: 40px;
     height: 40px;
@@ -154,8 +154,8 @@ body {
 }
 
 .theme-toggle:hover {
-    background-color: var(--background-lighter);
-    color: var(--text-primary);
+    background-color: var(--background-darker);
+    color: var(--primary-light);
 }
 
 .logout-btn {

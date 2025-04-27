@@ -5,8 +5,8 @@
 {% block content %}
 <div class="top-bar">
     <div class="welcome-text">
-        <h1>My Profile</h1>
-        <p>View and manage your profile information</p>
+        <h1><i class="fas fa-user"></i> My Profile</h1>
+        <p class="subtitle">View and manage your profile information</p>
     </div>
     <div class="user-menu">
         <span class="user-name">{{ user.get_full_name }}</span>
@@ -17,22 +17,115 @@
 <div class="profile-container">
     <div class="profile-card">
         <div class="profile-header">
+            <div class="profile-avatar">
+                <i class="fas fa-user-circle"></i>
+            </div>
             <h2>Personal Information</h2>
         </div>
         <div class="profile-body">
             <div class="profile-field">
-                <label>Full Name</label>
+                <div class="field-label">
+                    <i class="fas fa-user"></i>
+                    <label>Full Name</label>
+                </div>
                 <p>{{ user.get_full_name }}</p>
             </div>
             <div class="profile-field">
-                <label>Email</label>
+                <div class="field-label">
+                    <i class="fas fa-envelope"></i>
+                    <label>Email</label>
+                </div>
                 <p>{{ user.email }}</p>
             </div>
             <div class="profile-field">
-                <label>Role</label>
-                <p>{{ employee.get_role_display }}</p>
+                <div class="field-label">
+                    <i class="fas fa-briefcase"></i>
+                    <label>Role</label>
+                </div>
+                <p>{{ user.get_role_display }}</p>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .profile-container {
+        margin-top: 2rem;
+    }
+
+    .profile-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .profile-header {
+        background: var(--sidebar-bg);
+        padding: 2rem;
+        text-align: center;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1rem;
+        color: var(--text-secondary);
+        font-size: 4rem;
+    }
+
+    .profile-header h2 {
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    .profile-body {
+        padding: 2rem;
+    }
+
+    .profile-field {
+        margin-bottom: 1.5rem;
+    }
+
+    .field-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .field-label i {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+    }
+
+    .field-label label {
+        color: var(--text-secondary);
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .profile-field p {
+        color: var(--text-primary);
+        margin: 0;
+        padding-left: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .profile-header {
+            padding: 1.5rem;
+        }
+
+        .profile-body {
+            padding: 1.5rem;
+        }
+
+        .profile-avatar {
+            width: 60px;
+            height: 60px;
+            font-size: 3rem;
+        }
+    }
+</style>
 {% endblock %}

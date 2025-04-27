@@ -5,11 +5,13 @@ from accounts.models import User
 from django.db.models import Count
 from django.contrib import messages
 from django.utils.crypto import get_random_string
-from form_builder.models import Form
+from form_builder.models import Form, FormSubmission
 from django.views.generic import ListView
 import logging
 import json
-from django.http import JsonResponse
+import csv
+from datetime import datetime
+from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
@@ -365,3 +367,74 @@ def publish_form(request, slug):
         messages.error(request, f'Error publishing form: {str(e)}')
 
     return redirect('managerdashboard:forms_list')
+
+
+@login_required
+@manager_required
+def export_form_submissions(request, slug):
+    """
+    Export form submissions as CSV
+    """
+    try:
+        form = Form.objects.get(slug=slug)
+
+        # Check if user has permission to export this form's submissions
+        if not request.user.is_superuser and form.created_by != request.user:
+            messages.error(request, 'You do not have permission to export submissions for this form.')
+            return redirect('managerdashboard:forms_list')
+
+        # Get all submissions for this form
+        submissions = FormSubmission.objects.filter(form=form).order_by('-created_at')
+
+        if not submissions.exists():
+            messages.warning(request, 'No submissions found for this form.')
+            return redirect('managerdashboard:forms_list')
+
+        # Create the HttpResponse with CSV header
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"{form.slug}_submissions_{timestamp}.csv"
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        # Create CSV writer
+        writer = csv.writer(response)
+
+        # Get form fields from the first submission to determine columns
+        first_submission = submissions.first()
+        responses_data = json.loads(first_submission.responses)
+
+        # Create header row with field labels and add submission timestamp and employee info
+        header_row = ['Submission Date', 'Employee Email']
+        header_row.extend(responses_data.keys())
+        writer.writerow(header_row)
+
+        # Write data rows
+        for submission in submissions:
+            responses_data = json.loads(submission.responses)
+
+            # Create a row with submission timestamp and employee info
+            row = [
+                submission.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                submission.employee.email if submission.employee else 'Anonymous'
+            ]
+
+            # Add response data for each field
+            for field_label in responses_data.keys():
+                value = responses_data.get(field_label, '')
+
+                # Handle list values (like checkbox responses)
+                if isinstance(value, list):
+                    row.append(', '.join(value))
+                else:
+                    row.append(value)
+
+            writer.writerow(row)
+
+        return response
+
+    except Form.DoesNotExist:
+        messages.error(request, 'Form not found.')
+        return redirect('managerdashboard:forms_list')
+    except Exception as e:
+        messages.error(request, f'Error exporting submissions: {str(e)}')
+        return redirect('managerdashboard:forms_list')

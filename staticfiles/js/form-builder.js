@@ -461,9 +461,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Add SHGs to the dropdown
                             shgs.forEach(shg => {
                                 const option = document.createElement('option');
-                                const shgName = shg.shg_name || shg.name || '';
-                                option.value = shgName.toLowerCase();
-                                option.textContent = shgName;
+                                option.value = shg.shg_id || shg.id;
+                                option.textContent = shg.shg_name || shg.name;
                                 shgSelect.appendChild(option);
                             });
 
@@ -517,9 +516,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Add VOs to the dropdown
                             vos.forEach(vo => {
                                 const option = document.createElement('option');
-                                const voName = vo.vo_name || vo.name || '';
-                                option.value = voName.toLowerCase();
-                                option.textContent = voName;
+                                option.value = vo.vo_id || vo.id;
+                                option.textContent = vo.vo_name || vo.name;
                                 voSelect.appendChild(option);
                             });
 
@@ -573,9 +571,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Add CLFs to the dropdown
                             clfs.forEach(clf => {
                                 const option = document.createElement('option');
-                                const clfName = clf.clf_name || clf.name || '';
-                                option.value = clfName.toLowerCase();
-                                option.textContent = clfName;
+                                option.value = clf.clf_id || clf.id;
+                                option.textContent = clf.clf_name || clf.name;
                                 clfSelect.appendChild(option);
                             });
 
