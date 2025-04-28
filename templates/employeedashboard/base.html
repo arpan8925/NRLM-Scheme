@@ -31,12 +31,6 @@
                         <span>My Forms</span>
                     </a>
                 </li>
-                <li class="{% if request.path == '/employee/submissions/' %}active{% endif %}">
-                    <a href="{% url 'employeedashboard:my_submissions' %}">
-                        <i class="fas fa-paper-plane"></i>
-                        <span>Submissions</span>
-                    </a>
-                </li>
                 <li class="{% if request.path == '/employee/profile/' %}active{% endif %}">
                     <a href="{% url 'employeedashboard:profile' %}">
                         <i class="fas fa-user"></i>

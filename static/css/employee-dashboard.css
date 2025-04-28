@@ -25,6 +25,7 @@
     --bg-primary: #1a1b26;         /* Dark background */
     --bg-secondary: #24283b;       /* Card background */
     --bg-tertiary: #2d3a4a;        /* Hover states */
+    --card-bg: #24283b;
     
     /* Border Colors */
     --border-color: #2d3a4a;
@@ -39,7 +40,10 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background-color: var(--background-color);
+}
+
+i {
+    margin-right: 11px;
 }
 
 .dashboard-container {
@@ -50,13 +54,13 @@ body {
 /* Sidebar Styles */
 .sidebar {
     width: var(--sidebar-width);
-    background-color: white;
+
     padding: 2rem 1rem;
     border-right: 1px solid #E5E7EB;
 }
 
 .sidebar-header h2 {
-    color: var(--primary-color);
+    color: #47a3ff;
     font-size: 1.5rem;
     margin-bottom: 2rem;
     padding: 0 1rem;
@@ -74,7 +78,7 @@ body {
     display: flex;
     align-items: center;
     padding: 0.75rem 1rem;
-    color: var(--secondary-color);
+    color: var(--text-primary);
     text-decoration: none;
     border-radius: 0.5rem;
     transition: all 0.2s;
@@ -83,7 +87,7 @@ body {
 .sidebar-nav li.active a,
 .sidebar-nav a:hover {
     background-color: #EFF6FF;
-    color: var(--primary-color);
+    color: #000000;
 }
 
 /* Main Content Styles */

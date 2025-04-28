@@ -1,0 +1,366 @@
+{% extends 'managerdashboard/base.html' %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="edit-employee-container">
+    <div class="page-header">
+        <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            Edit Employee
+        </h2>
+        <a href="{% url 'managerdashboard:employee_list' %}" class="btn-back">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Back to List
+        </a>
+    </div>
+
+    <div class="form-card">
+        <form method="post" class="edit-employee-form">
+            {% csrf_token %}
+            
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="form-section">
+                <h3>Personal Information</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first_name">First Name</label>
+                        <input type="text" id="first_name" name="first_name" value="{{ employee.first_name }}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="last_name">Last Name</label>
+                        <input type="text" id="last_name" name="last_name" value="{{ employee.last_name }}" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" value="{{ employee.email }}" readonly>
+                    <small class="form-text">Email address cannot be changed</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">New Password (leave blank to keep current)</label>
+                    <input type="password" id="password" name="password" placeholder="Enter new password">
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3>Role & Location</h3>
+                
+                <div class="form-group">
+                    <label for="role">Role</label>
+                    <select id="role" name="role" required>
+                        <option value="district_employee" {% if employee.role == 'district_employee' %}selected{% endif %}>District Level Employee</option>
+                        <option value="block_employee" {% if employee.role == 'block_employee' %}selected{% endif %}>Block Level Employee</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="state">State</label>
+                    <select id="state" name="state" required>
+                        <option value="">Select State</option>
+                        <!-- States will be loaded dynamically -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="district">District</label>
+                    <select id="district" name="district" required>
+                        <option value="">Select District</option>
+                        <!-- Districts will be loaded dynamically -->
+                    </select>
+                </div>
+                
+                <div class="form-group" id="block-group" {% if employee.role != 'block_employee' %}style="display: none;"{% endif %}>
+                    <label for="block">Block</label>
+                    <select id="block" name="block" {% if employee.role == 'block_employee' %}required{% endif %}>
+                        <option value="">Select Block</option>
+                        <!-- Blocks will be loaded dynamically -->
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-save">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Save Changes
+                </button>
+                <a href="{% url 'managerdashboard:employee_list' %}" class="btn-cancel">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .edit-employee-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    
+    .page-header h2 {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0;
+    }
+    
+    .btn-back {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background-color: rgba(99, 102, 241, 0.1);
+        color: var(--text-secondary);
+        border-radius: 6px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-back:hover {
+        background-color: rgba(99, 102, 241, 0.2);
+    }
+    
+    .form-card {
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .form-section h3 {
+        color: var(--text-secondary);
+        margin: 0 0 1.5rem 0;
+        font-size: 1.25rem;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+    }
+    
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-primary);
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+    }
+    
+    .form-text {
+        display: block;
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+    
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .btn-save {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-save:hover {
+        background-color: var(--secondary-color);
+    }
+    
+    .btn-cancel {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        background-color: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancel:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    // Show/hide block field based on role selection
+    document.getElementById('role').addEventListener('change', function() {
+        const blockGroup = document.getElementById('block-group');
+        const blockSelect = document.getElementById('block');
+        
+        if (this.value === 'block_employee') {
+            blockGroup.style.display = 'block';
+            blockSelect.setAttribute('required', 'required');
+        } else {
+            blockGroup.style.display = 'none';
+            blockSelect.removeAttribute('required');
+        }
+    });
+    
+    // Load states, districts, and blocks from API
+    document.addEventListener('DOMContentLoaded', function() {
+        const stateSelect = document.getElementById('state');
+        const districtSelect = document.getElementById('district');
+        const blockSelect = document.getElementById('block');
+        
+        // Current values from the employee
+        const currentState = "{{ employee.state }}";
+        const currentDistrict = "{{ employee.district }}";
+        const currentBlock = "{{ employee.block }}";
+        
+        // Fetch states
+        fetch('/api/states/')
+            .then(response => response.json())
+            .then(data => {
+                stateSelect.innerHTML = '<option value="">Select State</option>';
+                data.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state.id;
+                    option.textContent = state.name;
+                    if (state.id === currentState) {
+                        option.selected = true;
+                    }
+                    stateSelect.appendChild(option);
+                });
+                
+                // If state is selected, load districts
+                if (currentState) {
+                    loadDistricts(currentState);
+                }
+            })
+            .catch(error => console.error('Error loading states:', error));
+        
+        // Load districts when state changes
+        stateSelect.addEventListener('change', function() {
+            loadDistricts(this.value);
+        });
+        
+        // Load blocks when district changes
+        districtSelect.addEventListener('change', function() {
+            loadBlocks(this.value);
+        });
+        
+        function loadDistricts(stateId) {
+            if (!stateId) return;
+            
+            fetch(`/api/districts/?state_id=${stateId}`)
+                .then(response => response.json())
+                .then(data => {
+                    districtSelect.innerHTML = '<option value="">Select District</option>';
+                    data.forEach(district => {
+                        const option = document.createElement('option');
+                        option.value = district.id;
+                        option.textContent = district.name;
+                        if (district.id === currentDistrict) {
+                            option.selected = true;
+                        }
+                        districtSelect.appendChild(option);
+                    });
+                    
+                    // If district is selected, load blocks
+                    if (currentDistrict) {
+                        loadBlocks(currentDistrict);
+                    }
+                })
+                .catch(error => console.error('Error loading districts:', error));
+        }
+        
+        function loadBlocks(districtId) {
+            if (!districtId) return;
+            
+            fetch(`/api/blocks/?district_id=${districtId}`)
+                .then(response => response.json())
+                .then(data => {
+                    blockSelect.innerHTML = '<option value="">Select Block</option>';
+                    data.forEach(block => {
+                        const option = document.createElement('option');
+                        option.value = block.id;
+                        option.textContent = block.name;
+                        if (block.id === currentBlock) {
+                            option.selected = true;
+                        }
+                        blockSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading blocks:', error));
+        }
+    });
+</script>
+{% endblock %}

@@ -61,6 +61,91 @@ def employee_list(request):
 
 @login_required
 @manager_required
+def view_employee(request, employee_id):
+    try:
+        employee = User.objects.get(id=employee_id, role__in=[User.DISTRICT_EMPLOYEE, User.BLOCK_EMPLOYEE])
+
+        context = {
+            'employee': employee,
+            'user': request.user,
+        }
+
+        return render(request, 'managerdashboard/view_employee.html', context)
+    except User.DoesNotExist:
+        messages.error(request, 'Employee not found.')
+        return redirect('managerdashboard:employee_list')
+
+@login_required
+@manager_required
+def edit_employee(request, employee_id):
+    try:
+        employee = User.objects.get(id=employee_id, role__in=[User.DISTRICT_EMPLOYEE, User.BLOCK_EMPLOYEE])
+
+        if request.method == 'POST':
+            # Get form data
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
+            role = request.POST.get('role')
+
+            # Validate required fields
+            if not first_name or not last_name or not role:
+                messages.error(request, 'First name, last name, and role are required.')
+                return render(request, 'managerdashboard/edit_employee.html', {
+                    'employee': employee,
+                })
+
+            # Update employee information
+            employee.first_name = first_name
+            employee.last_name = last_name
+            employee.role = role
+            employee.state = request.POST.get('state', '')
+            employee.district = request.POST.get('district', '')
+            employee.block = request.POST.get('block', '') if role == User.BLOCK_EMPLOYEE else ''
+
+            # Update password if provided
+            new_password = request.POST.get('password')
+            if new_password:
+                employee.set_password(new_password)
+
+            employee.save()
+
+            messages.success(request, f'Employee {first_name} {last_name} updated successfully!')
+            return redirect('managerdashboard:employee_list')
+
+        context = {
+            'employee': employee,
+            'user': request.user,
+        }
+
+        return render(request, 'managerdashboard/edit_employee.html', context)
+    except User.DoesNotExist:
+        messages.error(request, 'Employee not found.')
+        return redirect('managerdashboard:employee_list')
+
+@login_required
+@manager_required
+def delete_employee(request, employee_id):
+    try:
+        employee = User.objects.get(id=employee_id, role__in=[User.DISTRICT_EMPLOYEE, User.BLOCK_EMPLOYEE])
+
+        if request.method == 'POST':
+            employee_name = f"{employee.first_name} {employee.last_name}"
+            employee.delete()
+            messages.success(request, f'Employee {employee_name} deleted successfully!')
+            return redirect('managerdashboard:employee_list')
+
+        context = {
+            'employee': employee,
+            'user': request.user,
+        }
+
+        return render(request, 'managerdashboard/delete_employee.html', context)
+    except User.DoesNotExist:
+        messages.error(request, 'Employee not found.')
+        return redirect('managerdashboard:employee_list')
+
+@login_required
+@manager_required
 def add_employee(request):
     if request.method == 'POST':
         # Get form data
