@@ -194,8 +194,7 @@ def save_form(request):
         form = Form.objects.create(
             title=title,
             fields=json.dumps(cleaned_fields),
-            is_published=False,
-            created_by=request.user
+            is_published=False
         )
 
         return JsonResponse({
@@ -231,8 +230,8 @@ def update_form(request):
             data = json.loads(request.body)
             form = Form.objects.get(slug=data['slug'])
 
-            # Verify ownership
-            if not request.user.is_superuser and form.created_by and form.created_by != request.user:
+            # Verify ownership - only superusers can edit forms
+            if not request.user.is_superuser:
                 raise PermissionError("You don't have permission to edit this form")
 
             # Clean up the fields data
@@ -282,8 +281,8 @@ def edit_form(request, slug):
     try:
         form = Form.objects.get(slug=slug)
 
-        # Verify ownership
-        if not request.user.is_superuser and form.created_by and form.created_by != request.user:
+        # Verify ownership - only superusers can edit forms
+        if not request.user.is_superuser:
             messages.error(request, "You don't have permission to edit this form")
             return redirect('managerdashboard:forms_list')
 
@@ -352,8 +351,7 @@ def duplicate_form(request, slug):
             title=f"{original_form.title} (Copy)",
             description=original_form.description,
             fields=original_form.fields,
-            is_published=False,
-            created_by=request.user
+            is_published=False
         )
         messages.success(request, 'Form duplicated successfully!')
         return redirect('managerdashboard:edit_form', slug=new_form.slug)

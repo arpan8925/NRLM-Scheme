@@ -944,7 +944,7 @@
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
             // Submit using fetch
-            const response = await fetch('/manager/forms/update/', {
+            const response = await fetch('{% url 'managerdashboard:update_form' %}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1002,7 +1002,7 @@
                     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
                     // Save the form first
-                    const saveResponse = await fetch('/manager/forms/update/', {
+                    const saveResponse = await fetch('{% url 'managerdashboard:update_form' %}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1016,7 +1016,7 @@
                     }
 
                     // Now publish the form
-                    const response = await fetch(`/manager/forms/${slug}/publish/`, {
+                    const response = await fetch(`{% url 'managerdashboard:publish_form' slug='PLACEHOLDER' %}`.replace('PLACEHOLDER', slug), {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

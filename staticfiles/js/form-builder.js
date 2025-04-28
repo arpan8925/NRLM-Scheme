@@ -1163,8 +1163,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const slug = saveResult.form_slug;
             console.log('Publishing form with slug:', slug);
 
+            // Get the URL from the data-publish-url attribute if it exists, otherwise use the default
+            const publishUrl = document.querySelector('.btn-publish').dataset.publishUrl || `/manager/forms/${slug}/publish/`;
+            console.log('Publishing to URL:', publishUrl);
+
             // Submit using fetch to the correct publish endpoint
-            const response = await fetch(`/manager/forms/${slug}/publish/`, {
+            const response = await fetch(publishUrl.replace('PLACEHOLDER', slug), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1191,66 +1195,6 @@ document.addEventListener('DOMContentLoaded', function() {
             showNotification(error.message, 'error');
         }
     });
-
-    // Add this function to show publish success modal
-    function showPublishSuccessModal(result) {
-        const modal = document.createElement('div');
-        modal.className = 'modal publish-success-modal';
-        modal.style.display = 'block';
-
-        modal.innerHTML = `
-            <div class="modal-content publish-success-content">
-                <div class="modal-header">
-                    <h2>Form Published Successfully!</h2>
-                    <button class="modal-close" type="button">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="publish-details">
-                        <div class="form-summary">
-                            <h3>${result.form_data.title}</h3>
-                            <p>Form ID: ${result.form_id}</p>
-                            <p>Status: Published</p>
-                            <p>Public URL: <a href="${result.public_url}" target="_blank">${result.public_url}</a></p>
-                        </div>
-                    </div>
-
-                    <div class="modal-actions">
-                        <button class="btn-copy" onclick="copyToClipboard('${result.public_url}')">
-                            Copy Public URL
-                        </button>
-                        <button class="btn-view" onclick="window.location.href='${result.redirect_url}'">
-                            View All Forms
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-
-        // Add close button functionality
-        modal.querySelector('.modal-close').addEventListener('click', () => {
-            modal.style.display = 'none';
-            modal.remove();
-        });
-
-        // Close modal when clicking outside
-        modal.addEventListener('click', (event) => {
-            if (event.target === modal) {
-                modal.style.display = 'none';
-                modal.remove();
-            }
-        });
-    }
-
-    // Add helper function to copy URL to clipboard
-    function copyToClipboard(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            alert('Public URL copied to clipboard!');
-        }).catch(err => {
-            console.error('Failed to copy URL: ', err);
-        });
-    }
 
     // Add this function to show the save success modal
     function showSaveSuccessModal(result) {
