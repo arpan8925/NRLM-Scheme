@@ -1,16 +1,71 @@
 {% extends 'employeedashboard/base.html' %}
+{% load static %}
 
-{% block title %}My Submissions{% endblock %}
+{% block inner_title %}My Submissions{% endblock %}
 
-{% block content %}
+{% block inner_css %}
+<style>
+    .submissions-container {
+        margin-top: 2rem;
+    }
+
+    .submissions-table {
+        background: var(--card-bg);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .submissions-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .submissions-table th,
+    .submissions-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .submissions-table th {
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .submissions-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .submissions-table tr:hover td {
+        background: rgba(99, 102, 241, 0.05);
+    }
+
+    .status-completed {
+        background: rgba(16, 185, 129, 0.1);
+        color: #34D399;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
+    }
+
+    .no-submissions {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 3rem;
+        text-align: center;
+        color: var(--text-primary);
+        opacity: 0.7;
+    }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
 <div class="top-bar">
     <div class="welcome-text">
-        <h1>My Submissions</h1>
+        <h1><i class="fas fa-paper-plane"></i> My Submissions</h1>
         <p>View your form submissions</p>
-    </div>
-    <div class="user-menu">
-        <span class="user-name">{{ user.get_full_name }}</span>
-        <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
     </div>
 </div>
 

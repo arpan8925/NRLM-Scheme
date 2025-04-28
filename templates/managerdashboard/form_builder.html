@@ -1,6 +1,6 @@
-{% extends 'managerdashboard/dashboard.html' %}
+{% extends 'managerdashboard/base.html' %}
 {% load static %}
-{% block main_content %}
+{% block dashboard_content %}
 <!-- Add notification container -->
 <div id="notification" class="notification"></div>
 
@@ -162,8 +162,8 @@
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock dashboard_content %}
 
-{% block extra_js %}
+{% block inner_js %}
 <script src="{% static 'js/form-builder.js' %}"></script>
 {% endblock %}

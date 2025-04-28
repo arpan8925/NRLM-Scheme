@@ -1,8 +1,8 @@
-{% extends 'managerdashboard/dashboard.html' %}
+{% extends 'managerdashboard/base.html' %}
 {% load static %}
 {% load form_filters %}
 
-{% block main_content %}
+{% block dashboard_content %}
 <div class="submissions-container">
     <!-- Messages Section -->
     {% if messages %}
@@ -270,4 +270,4 @@ $(document).ready(function() {
     });
 });
 </script>
-{% endblock %}
+{% endblock dashboard_content %}

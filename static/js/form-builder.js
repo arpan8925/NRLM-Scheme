@@ -216,7 +216,9 @@ document.addEventListener('DOMContentLoaded', function() {
         selectField(field);
     }
 
-    function createFormField(type, label = '') {
+    // Make createFormField globally accessible
+    window.createFormField = function(type, label = '') {
+        console.log('Creating form field of type:', type, 'with label:', label);
         const field = document.createElement('div');
         field.className = 'form-field';
         field.setAttribute('data-type', type);
@@ -798,8 +800,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // Single function to collect form data
-    function collectFormFields() {
+    // Single function to collect form data - make it globally accessible
+    window.collectFormFields = function() {
+        console.log('Collecting form fields');
         const formCanvas = document.getElementById('formCanvas');
         const fields = [];
 
@@ -867,8 +870,9 @@ document.addEventListener('DOMContentLoaded', function() {
         return fields;
     }
 
-    // Function to get complete form data
-    function getFormData() {
+    // Function to get complete form data - make it globally accessible
+    window.getFormData = function() {
+        console.log('Getting form data');
         const formData = {
             title: document.getElementById('formTitle').value || 'Untitled Form',
             fields: collectFormFields()
@@ -880,8 +884,9 @@ document.addEventListener('DOMContentLoaded', function() {
         return formData;
     }
 
-    // Add notification function
-    function showNotification(message, type = 'success') {
+    // Add notification function - make it globally accessible
+    window.showNotification = function(message, type = 'success') {
+        console.log('Showing notification:', message, 'type:', type);
         const notification = document.getElementById('notification');
         notification.textContent = message;
         notification.className = `notification ${type}`;
@@ -1131,19 +1136,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Log form data for debugging
-            console.log('Publishing form data:', formData);
-
+            // First save the form to get a slug
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-            // Submit using fetch
-            const response = await fetch('/manager/forms/publish/', {
+            // Save the form first
+            const saveResponse = await fetch('/manager/forms/save/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrfToken,
                 },
                 body: JSON.stringify(formData)
+            });
+
+            if (!saveResponse.ok) {
+                throw new Error(`HTTP error during save! status: ${saveResponse.status}`);
+            }
+
+            const saveResult = await saveResponse.json();
+
+            if (!saveResult.success) {
+                throw new Error(saveResult.error || 'Failed to save form before publishing');
+            }
+
+            // Now publish the form using the slug
+            const slug = saveResult.form_slug;
+            console.log('Publishing form with slug:', slug);
+
+            // Submit using fetch to the correct publish endpoint
+            const response = await fetch(`/manager/forms/${slug}/publish/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
             });
 
             if (!response.ok) {

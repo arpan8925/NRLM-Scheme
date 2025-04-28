@@ -1,6 +1,7 @@
-{% extends 'managerdashboard/dashboard.html' %}
+{% extends 'managerdashboard/base.html' %}
 {% load static %}
 
+{% block dashboard_content %}
 <style>
     .loading-spinner {
         display: inline-block;
@@ -14,8 +15,6 @@
         cursor: not-allowed;
     }
 </style>
-
-{% block main_content %}
 <div class="form-container">
     <div class="page-header">
         <h2>
@@ -343,4 +342,4 @@
     });
 </script>
 
-{% endblock %}
+{% endblock dashboard_content %}

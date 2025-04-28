@@ -1,53 +1,9 @@
 {% extends 'employeedashboard/base.html' %}
+{% load static %}
 
-{% block title %}My Profile{% endblock %}
+{% block inner_title %}My Profile{% endblock %}
 
-{% block content %}
-<div class="top-bar">
-    <div class="welcome-text">
-        <h1><i class="fas fa-user"></i> My Profile</h1>
-        <p class="subtitle">View and manage your profile information</p>
-    </div>
-    <div class="user-menu">
-        <span class="user-name">{{ user.get_full_name }}</span>
-        <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
-    </div>
-</div>
-
-<div class="profile-container">
-    <div class="profile-card">
-        <div class="profile-header">
-            <div class="profile-avatar">
-                <i class="fas fa-user-circle"></i>
-            </div>
-            <h2>Personal Information</h2>
-        </div>
-        <div class="profile-body">
-            <div class="profile-field">
-                <div class="field-label">
-                    <i class="fas fa-user"></i>
-                    <label>Full Name</label>
-                </div>
-                <p>{{ user.get_full_name }}</p>
-            </div>
-            <div class="profile-field">
-                <div class="field-label">
-                    <i class="fas fa-envelope"></i>
-                    <label>Email</label>
-                </div>
-                <p>{{ user.email }}</p>
-            </div>
-            <div class="profile-field">
-                <div class="field-label">
-                    <i class="fas fa-briefcase"></i>
-                    <label>Role</label>
-                </div>
-                <p>{{ user.get_role_display }}</p>
-            </div>
-        </div>
-    </div>
-</div>
-
+{% block inner_css %}
 <style>
     .profile-container {
         margin-top: 2rem;
@@ -128,4 +84,47 @@
         }
     }
 </style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="top-bar">
+    <div class="welcome-text">
+        <h1><i class="fas fa-user"></i> My Profile</h1>
+        <p class="subtitle">View and manage your profile information</p>
+    </div>
+</div>
+
+<div class="profile-container">
+    <div class="profile-card">
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <h2>Personal Information</h2>
+        </div>
+        <div class="profile-body">
+            <div class="profile-field">
+                <div class="field-label">
+                    <i class="fas fa-user"></i>
+                    <label>Full Name</label>
+                </div>
+                <p>{{ user.get_full_name }}</p>
+            </div>
+            <div class="profile-field">
+                <div class="field-label">
+                    <i class="fas fa-envelope"></i>
+                    <label>Email</label>
+                </div>
+                <p>{{ user.email }}</p>
+            </div>
+            <div class="profile-field">
+                <div class="field-label">
+                    <i class="fas fa-briefcase"></i>
+                    <label>Role</label>
+                </div>
+                <p>{{ user.get_role_display }}</p>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

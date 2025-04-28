@@ -1,49 +1,49 @@
 {% extends 'employeedashboard/base.html' %}
 
-{% block title %}Dashboard{% endblock %}
+{% block inner_title %}Dashboard{% endblock %}
 
-{% block content %}
-            <!-- Top Bar -->
-            <header class="top-bar">
-                <div class="welcome-text">
-                    <h1>Welcome, {{ user.get_full_name|default:user.username }}!</h1>
-                    <p>Here's your activity overview</p>
-                </div>
-                <div class="user-menu">
-                    <span class="user-name">{{ user.get_full_name }}</span>
-                    <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
-                </div>
-            </header>
+{% block dashboard_content %}
+<!-- Top Bar -->
+<header class="top-bar">
+    <div class="welcome-text">
+        <h1>Welcome, {{ user.get_full_name|default:user.username }}!</h1>
+        <p>Here's your activity overview</p>
+    </div>
+    <div class="user-menu">
+        <span class="user-name">{{ user.get_full_name }}</span>
+        <a href="{% url 'logout' %}" class="logout-btn">Logout</a>
+    </div>
+</header>
 
-            <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3>Total Submissions</h3>
-                    <p class="stat-number">{{ total_submissions }}</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Pending Forms</h3>
-                    <p class="stat-number">{{ pending_forms }}</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Completed Forms</h3>
-                    <p class="stat-number">{{ completed_forms }}</p>
-                </div>
-            </div>
+<!-- Stats Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Total Submissions</h3>
+        <p class="stat-number">{{ total_submissions }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Pending Forms</h3>
+        <p class="stat-number">{{ pending_forms }}</p>
+    </div>
+    <div class="stat-card">
+        <h3>Completed Forms</h3>
+        <p class="stat-number">{{ completed_forms }}</p>
+    </div>
+</div>
 
-            <!-- Pending Tasks -->
-            <section class="pending-tasks">
-                <h2>Pending Tasks</h2>
-                <div class="tasks-list">
-                    <p class="no-tasks">No pending tasks at the moment</p>
-                </div>
-            </section>
+<!-- Pending Tasks -->
+<section class="pending-tasks">
+    <h2>Pending Tasks</h2>
+    <div class="tasks-list">
+        <p class="no-tasks">No pending tasks at the moment</p>
+    </div>
+</section>
 
-            <!-- Recent Submissions -->
-            <section class="recent-submissions">
-                <h2>Recent Submissions</h2>
-                <div class="submissions-list">
-                    <p class="no-submissions">No recent submissions to display</p>
-                </div>
-            </section>
+<!-- Recent Submissions -->
+<section class="recent-submissions">
+    <h2>Recent Submissions</h2>
+    <div class="submissions-list">
+        <p class="no-submissions">No recent submissions to display</p>
+    </div>
+</section>
 {% endblock %}

@@ -15,6 +15,7 @@ from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -193,12 +194,14 @@ def save_form(request):
         form = Form.objects.create(
             title=title,
             fields=json.dumps(cleaned_fields),
-            is_published=False
+            is_published=False,
+            created_by=request.user
         )
 
         return JsonResponse({
             'success': True,
             'form_id': form.id,
+            'form_slug': form.slug,
             'redirect_url': reverse('managerdashboard:forms_list'),
             'form_data': {
                 'title': form.title,
@@ -229,7 +232,7 @@ def update_form(request):
             form = Form.objects.get(slug=data['slug'])
 
             # Verify ownership
-            if not request.user.is_superuser and form.created_by != request.user:
+            if not request.user.is_superuser and form.created_by and form.created_by != request.user:
                 raise PermissionError("You don't have permission to edit this form")
 
             # Clean up the fields data
@@ -262,6 +265,8 @@ def update_form(request):
 
             return JsonResponse({
                 'success': True,
+                'form_id': form.id,
+                'form_slug': form.slug,
                 'redirect_url': reverse('managerdashboard:forms_list')
             })
 
@@ -278,21 +283,54 @@ def edit_form(request, slug):
         form = Form.objects.get(slug=slug)
 
         # Verify ownership
-        if not request.user.is_superuser and form.created_by != request.user:
+        if not request.user.is_superuser and form.created_by and form.created_by != request.user:
             messages.error(request, "You don't have permission to edit this form")
             return redirect('managerdashboard:forms_list')
 
         # Load form fields from JSON
         try:
+            # Print the raw fields data if DEBUG is True
+            if settings.DEBUG:
+                print(f"Raw form fields data: {form.fields}")
+
             form_fields = json.loads(form.fields)
-        except json.JSONDecodeError:
+
+            # Print the parsed fields data if DEBUG is True
+            if settings.DEBUG:
+                print(f"Parsed form fields: {form_fields}")
+
+            # Ensure form_fields is a list
+            if not isinstance(form_fields, list):
+                if settings.DEBUG:
+                    print(f"Warning: form_fields is not a list, it's a {type(form_fields)}")
+                if isinstance(form_fields, dict):
+                    form_fields = [form_fields]
+                else:
+                    form_fields = []
+        except json.JSONDecodeError as e:
+            if settings.DEBUG:
+                print(f"JSON decode error: {e}")
             form_fields = []
+        except Exception as e:
+            if settings.DEBUG:
+                print(f"Unexpected error parsing form fields: {e}")
+            form_fields = []
+
+        # Log the form fields for debugging
+        logger.debug(f"Form fields for {form.slug}: {form_fields}")
+        if settings.DEBUG:
+            print(f"Form fields for {form.slug}: {form_fields}")
 
         context = {
             'form': form,
             'form_fields': json.dumps(form_fields),
             'user': request.user,
+            'debug': settings.DEBUG,  # Pass DEBUG setting to the template
         }
+
+        # Print the context only if DEBUG is True
+        if settings.DEBUG:
+            print(f"Context form_fields: {context['form_fields']}")
 
         return render(request, 'managerdashboard/edit_form.html', context)
 
@@ -305,18 +343,17 @@ def edit_form(request, slug):
 def duplicate_form(request, slug):
     try:
         original_form = Form.objects.get(slug=slug)
-        if not request.user.is_superuser and original_form.creator.user != request.user:
+        if not request.user.is_superuser:
             messages.error(request, 'You do not have permission to duplicate this form.')
             return redirect('managerdashboard:forms_list')
 
         # Create a new form with copied data
-        manager = request.user.dashboard_manager if not request.user.is_superuser else None
         new_form = Form.objects.create(
             title=f"{original_form.title} (Copy)",
             description=original_form.description,
-            creator=manager,
-            status='draft',
-            form_data=original_form.form_data
+            fields=original_form.fields,
+            is_published=False,
+            created_by=request.user
         )
         messages.success(request, 'Form duplicated successfully!')
         return redirect('managerdashboard:edit_form', slug=new_form.slug)
@@ -329,7 +366,7 @@ def duplicate_form(request, slug):
 def delete_form(request, slug):
     try:
         form = Form.objects.get(slug=slug)
-        if not request.user.is_superuser and form.creator.user != request.user:
+        if not request.user.is_superuser:
             messages.error(request, 'You do not have permission to delete this form.')
             return redirect('managerdashboard:forms_list')
 
@@ -347,12 +384,16 @@ def publish_form(request, slug):
         form = Form.objects.get(slug=slug)
 
         # Check if user has permission to publish this form
-        if not request.user.is_superuser and form.created_by != request.user:
+        if not request.user.is_superuser:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.content_type == 'application/json':
+                return JsonResponse({'success': False, 'error': 'You do not have permission to publish this form.'})
             messages.error(request, 'You do not have permission to publish this form.')
             return redirect('managerdashboard:forms_list')
 
         # Check if form is already published
         if form.is_published:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.content_type == 'application/json':
+                return JsonResponse({'success': False, 'error': 'This form is already published.'})
             messages.error(request, 'This form is already published.')
             return redirect('managerdashboard:forms_list')
 
@@ -360,13 +401,36 @@ def publish_form(request, slug):
         form.is_published = True
         form.save()
 
-        messages.success(request, 'Form published successfully!')
-    except Form.DoesNotExist:
-        messages.error(request, 'Form not found.')
-    except Exception as e:
-        messages.error(request, f'Error publishing form: {str(e)}')
+        # If it's an AJAX request, return JSON response
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.content_type == 'application/json':
+            return JsonResponse({
+                'success': True,
+                'message': 'Form published successfully!',
+                'form_id': form.id,
+                'form_slug': form.slug,
+                'form_data': {
+                    'title': form.title,
+                    'fields': json.loads(form.fields),
+                    'is_published': form.is_published,
+                },
+                'public_url': request.build_absolute_uri(f'/form/{form.slug}'),
+                'redirect_url': reverse('managerdashboard:forms_list')
+            })
 
-    return redirect('managerdashboard:forms_list')
+        # Otherwise, redirect with a success message
+        messages.success(request, 'Form published successfully!')
+        return redirect('managerdashboard:forms_list')
+
+    except Form.DoesNotExist:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.content_type == 'application/json':
+            return JsonResponse({'success': False, 'error': 'Form not found.'})
+        messages.error(request, 'Form not found.')
+        return redirect('managerdashboard:forms_list')
+    except Exception as e:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.content_type == 'application/json':
+            return JsonResponse({'success': False, 'error': f'Error publishing form: {str(e)}'})
+        messages.error(request, f'Error publishing form: {str(e)}')
+        return redirect('managerdashboard:forms_list')
 
 
 @login_required
@@ -379,7 +443,7 @@ def export_form_submissions(request, slug):
         form = Form.objects.get(slug=slug)
 
         # Check if user has permission to export this form's submissions
-        if not request.user.is_superuser and form.created_by != request.user:
+        if not request.user.is_superuser:
             messages.error(request, 'You do not have permission to export submissions for this form.')
             return redirect('managerdashboard:forms_list')
 
@@ -450,7 +514,7 @@ def form_submissions(request, slug):
         form = Form.objects.get(slug=slug)
 
         # Check if user has permission to view this form's submissions
-        if not request.user.is_superuser and form.created_by != request.user:
+        if not request.user.is_superuser:
             messages.error(request, 'You do not have permission to view submissions for this form.')
             return redirect('managerdashboard:forms_list')
 

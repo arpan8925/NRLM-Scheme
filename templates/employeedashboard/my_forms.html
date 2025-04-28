@@ -1,47 +1,9 @@
 {% extends 'employeedashboard/base.html' %}
+{% load static %}
 
-{% block title %}My Forms{% endblock %}
+{% block inner_title %}My Forms{% endblock %}
 
-{% block content %}
-<div class="top-bar">
-    <div class="welcome-text">
-        <h1><i class="fas fa-file-alt"></i> My Forms</h1>
-        <p class="subtitle">View and fill out available forms</p>
-    </div>
-</div>
-
-<div class="forms-container">
-    {% if forms %}
-        <div class="forms-grid">
-            {% for form in forms %}
-                <div class="form-card">
-                    <div class="form-icon">
-                        <i class="fas fa-file-alt"></i>
-                    </div>
-                    <div class="form-content">
-                        <h3>{{ form.title }}</h3>
-                        <p>{{ form.description|truncatechars:100 }}</p>
-                        <div class="form-meta">
-                            <span class="form-date">
-                                <i class="far fa-calendar-alt"></i>
-                                Created: {{ form.created_at|date:"M d, Y" }}
-                            </span>
-                        </div>
-                    </div>
-                    <a href="{% url 'form_builder:view_form' form.slug %}" class="view-form-btn">
-                        <i class="fas fa-eye"></i> View Form
-                    </a>
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
-        <div class="empty-state">
-            <i class="fas fa-file-alt"></i>
-            <p>No forms are available at this time.</p>
-        </div>
-    {% endif %}
-</div>
-
+{% block inner_css %}
 <style>
     .forms-container {
         margin-top: 2rem;
@@ -90,7 +52,7 @@
     }
 
     .form-content p {
-        color: var(--text-muted);
+        color: var(--text-primary);
         opacity: 0.8;
         margin: 0 0 1rem 0;
     }
@@ -100,7 +62,7 @@
     }
 
     .form-date {
-        color: var(--text-muted);
+        color: var(--text-primary);
         opacity: 0.7;
         font-size: 0.9rem;
         display: flex;
@@ -147,4 +109,45 @@
         }
     }
 </style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="top-bar">
+    <div class="welcome-text">
+        <h1><i class="fas fa-file-alt"></i> My Forms</h1>
+        <p class="subtitle">View and fill out available forms</p>
+    </div>
+</div>
+
+<div class="forms-container">
+    {% if forms %}
+        <div class="forms-grid">
+            {% for form in forms %}
+                <div class="form-card">
+                    <div class="form-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="form-content">
+                        <h3>{{ form.title }}</h3>
+                        <p>{{ form.description|truncatechars:100 }}</p>
+                        <div class="form-meta">
+                            <span class="form-date">
+                                <i class="far fa-calendar-alt"></i>
+                                Created: {{ form.created_at|date:"M d, Y" }}
+                            </span>
+                        </div>
+                    </div>
+                    <a href="{% url 'form_builder:view_form' form.slug %}" class="view-form-btn">
+                        <i class="fas fa-eye"></i> View Form
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-file-alt"></i>
+            <p>No forms are available at this time.</p>
+        </div>
+    {% endif %}
+</div>
 {% endblock %}
