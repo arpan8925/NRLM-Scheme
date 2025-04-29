@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .decorators import manager_required
 from accounts.models import User
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.contrib import messages
 from django.utils.crypto import get_random_string
 from form_builder.models import Form, FormSubmission
@@ -10,12 +10,13 @@ from django.views.generic import ListView
 import logging
 import json
 import csv
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 from django.conf import settings
+from django.db.models.functions import TruncDate, TruncMonth, TruncWeek
 
 logger = logging.getLogger(__name__)
 
@@ -638,3 +639,113 @@ def form_submissions(request, slug):
     except Form.DoesNotExist:
         messages.error(request, 'Form not found.')
         return redirect('managerdashboard:forms_list')
+
+
+@login_required
+@manager_required
+def reports(request):
+    """
+    Display reports and visualizations for form submissions by block
+    """
+    # Get all forms
+    forms = Form.objects.all()
+
+    # Get all submissions
+    submissions = FormSubmission.objects.all()
+
+    # Get all blocks that have submissions
+    blocks = User.objects.filter(
+        role=User.BLOCK_EMPLOYEE,
+        form_submissions__isnull=False
+    ).values('block').distinct()
+
+    # Get submission counts by form
+    form_submission_counts = Form.objects.annotate(
+        submission_count=Count('submissions')
+    ).values('title', 'submission_count').order_by('-submission_count')
+
+    # Get submission counts by block
+    block_submission_counts = User.objects.filter(
+        role=User.BLOCK_EMPLOYEE,
+        form_submissions__isnull=False
+    ).values('block').annotate(
+        submission_count=Count('form_submissions')
+    ).order_by('-submission_count')
+
+    # Get submission counts by form and block
+    form_block_submission_counts = []
+    for form in forms:
+        block_counts = User.objects.filter(
+            role=User.BLOCK_EMPLOYEE,
+            form_submissions__form=form
+        ).values('block').annotate(
+            submission_count=Count('form_submissions')
+        ).order_by('-submission_count')
+
+        if block_counts:
+            form_block_submission_counts.append({
+                'form_title': form.title,
+                'form_id': form.id,
+                'block_counts': list(block_counts)
+            })
+
+    # Get detailed breakdown of Block, Form, and Submission count
+    detailed_submission_counts = []
+
+    # Query to get all combinations of block, form, and count
+    block_form_counts = FormSubmission.objects.filter(
+        employee__role=User.BLOCK_EMPLOYEE
+    ).values(
+        'employee__block',
+        'form__title'
+    ).annotate(
+        submission_count=Count('id')
+    ).order_by('employee__block', 'form__title')
+
+    # Convert to a more usable format
+    for item in block_form_counts:
+        detailed_submission_counts.append({
+            'block': item['employee__block'],
+            'form': item['form__title'],
+            'count': item['submission_count']
+        })
+
+    # Get submission counts by date (last 30 days)
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    date_submission_counts = FormSubmission.objects.filter(
+        created_at__gte=thirty_days_ago
+    ).annotate(
+        date=TruncDate('created_at')
+    ).values('date').annotate(
+        submission_count=Count('id')
+    ).order_by('date')
+
+    # Get submission counts by week
+    week_submission_counts = FormSubmission.objects.annotate(
+        week=TruncWeek('created_at')
+    ).values('week').annotate(
+        submission_count=Count('id')
+    ).order_by('week')
+
+    # Get submission counts by month
+    month_submission_counts = FormSubmission.objects.annotate(
+        month=TruncMonth('created_at')
+    ).values('month').annotate(
+        submission_count=Count('id')
+    ).order_by('month')
+
+    context = {
+        'forms': forms,
+        'submissions_count': submissions.count(),
+        'blocks': blocks,
+        'form_submission_counts': list(form_submission_counts),
+        'block_submission_counts': list(block_submission_counts),
+        'form_block_submission_counts': form_block_submission_counts,
+        'date_submission_counts': list(date_submission_counts),
+        'week_submission_counts': list(week_submission_counts),
+        'month_submission_counts': list(month_submission_counts),
+        'detailed_submission_counts': detailed_submission_counts,
+        'user': request.user,
+    }
+
+    return render(request, 'managerdashboard/reports.html', context)

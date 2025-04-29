@@ -54,6 +54,47 @@
     </div>
 
     {% if submissions %}
+    <!-- Custom Filters Section -->
+    <div class="custom-filters">
+        <div class="filter-group">
+            <label for="employee-filter">Filter by Employee</label>
+            <select id="employee-filter">
+                <option value="">All Employees</option>
+                <!-- Will be populated by JavaScript -->
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Filter by Date Range</label>
+            <div class="date-range">
+                <input type="date" id="date-from" placeholder="From">
+                <span>to</span>
+                <input type="date" id="date-to" placeholder="To">
+            </div>
+        </div>
+
+        {% if field_labels %}
+        <div class="filter-group">
+            <label for="field-filter">Filter by Field</label>
+            <select id="field-filter">
+                <option value="">All Fields</option>
+                {% for label in field_labels %}
+                <option value="{{ label }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="field-value">Field Value</label>
+            <input type="text" id="field-value" placeholder="Enter value to search">
+        </div>
+        {% endif %}
+
+        <div class="filter-group">
+            <label>&nbsp;</label>
+            <button id="reset-filters" class="btn-back" style="width: fit-content;">Reset Filters</button>
+        </div>
+    </div>
     <div class="submissions-table-container">
         <table id="submissionsTable" class="display">
             <thead>
@@ -201,16 +242,37 @@ table.dataTable tbody td {
     vertical-align: top;
 }
 
-table.dataTable tbody tr {
-    background-color: rgba(55, 65, 81, 0.2) !important;
+/* Remove white background from DataTables */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_processing,
+.dataTables_wrapper .dataTables_paginate,
+.dataTables_wrapper .dataTables_scroll,
+table.dataTable tbody tr,
+table.dataTable.stripe tbody tr.odd,
+table.dataTable.display tbody tr.odd,
+table.dataTable.hover tbody tr:hover,
+table.dataTable.display tbody tr:hover,
+table.dataTable.order-column tbody tr > .sorting_1,
+table.dataTable.display tbody tr > .sorting_1 {
+    background-color: transparent !important;
 }
 
-table.dataTable tbody tr:hover {
-    background-color: rgba(55, 65, 81, 0.4) !important;
+/* Fix odd/even row styling */
+table.dataTable.stripe tbody tr.odd,
+table.dataTable.display tbody tr.odd {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Fix hover state */
+table.dataTable.hover tbody tr:hover,
+table.dataTable.display tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
 }
 
 .sorting_1 {
-    background-color: rgba(55, 65, 81, 0.4) !important;
+    background-color: transparent !important;
 }
 
 .dataTables_wrapper .dataTables_length,
@@ -224,11 +286,70 @@ table.dataTable tbody tr:hover {
 
 .dataTables_wrapper .dataTables_length select,
 .dataTables_wrapper .dataTables_filter input {
-    background-color: rgba(55, 65, 81, 0.3);
+    background-color: var(--background-dark, #1a1b26);
     border: 1px solid #4B5563;
     color: #E5E7EB;
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
+}
+
+/* Style for select elements and options */
+select, select option {
+    background-color: var(--background-dark, #1a1b26);
+    color: #E5E7EB;
+}
+
+/* Column filter styling */
+table.dataTable thead th select {
+    width: 100%;
+    background-color: var(--background-dark, #1a1b26);
+    color: #E5E7EB;
+    border: 1px solid #4B5563;
+    border-radius: 0.25rem;
+    padding: 0.25rem;
+    margin-top: 0.5rem;
+}
+
+/* Custom filter container */
+.custom-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: rgba(55, 65, 81, 0.3);
+    border-radius: 0.5rem;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    font-size: 0.875rem;
+    color: #9CA3AF;
+}
+
+.filter-group select,
+.filter-group input {
+    background-color: var(--background-dark, #1a1b26);
+    border: 1px solid #4B5563;
+    color: #E5E7EB;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    min-width: 200px;
+}
+
+.date-range {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.date-range input {
+    min-width: 150px;
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button {
@@ -255,7 +376,8 @@ table.dataTable tbody tr:hover {
 <script>
 // Initialize DataTables
 $(document).ready(function() {
-    $('#submissionsTable').DataTable({
+    // Initialize DataTable
+    var table = $('#submissionsTable').DataTable({
         responsive: true,
         order: [[2, 'desc']], // Sort by date column (index 2) in descending order
         pageLength: 25, // Show 25 entries per page
@@ -266,7 +388,133 @@ $(document).ready(function() {
             info: "Showing _START_ to _END_ of _TOTAL_ submissions",
             emptyTable: "No submissions available",
             zeroRecords: "No matching submissions found"
+        },
+        initComplete: function() {
+            // Add column filters to headers
+            this.api().columns([1, 2]).every(function(index) { // Employee and Date columns
+                var column = this;
+                var title = $(column.header()).text();
+
+                // Create select element for Employee column
+                if (index === 1) { // Employee column
+                    var select = $('<select class="column-filter"><option value="">All</option></select>')
+                        .appendTo($(column.header()).empty().append(title))
+                        .on('change', function() {
+                            var val = $.fn.dataTable.util.escapeRegex(
+                                $(this).val()
+                            );
+                            column
+                                .search(val ? '^'+val+'$' : '', true, false)
+                                .draw();
+                        });
+
+                    // Get unique values for the employee column
+                    column.data().unique().sort().each(function(d, j) {
+                        select.append('<option value="'+d+'">'+d+'</option>');
+                    });
+                }
+
+                // Populate the employee filter dropdown
+                var employeeFilter = $('#employee-filter');
+                table.column(1).data().unique().sort().each(function(d, j) {
+                    employeeFilter.append('<option value="'+d+'">'+d+'</option>');
+                });
+
+                // Apply dark theme to all select elements
+                $('select').css({
+                    'background-color': 'var(--background-dark, #1a1b26)',
+                    'color': '#E5E7EB',
+                    'border': '1px solid #4B5563'
+                });
+            });
         }
+    });
+
+    // Custom filter for employee dropdown
+    $('#employee-filter').on('change', function() {
+        var val = $.fn.dataTable.util.escapeRegex($(this).val());
+        table.column(1).search(val ? '^'+val+'$' : '', true, false).draw();
+    });
+
+    // Date range filtering
+    $.fn.dataTable.ext.search.push(
+        function(settings, data, dataIndex) {
+            var fromDate = $('#date-from').val();
+            var toDate = $('#date-to').val();
+            var dateCol = data[2]; // Date column index
+
+            // Parse the date from the table (format: "MMM DD, YYYY HH:MM")
+            var dateParts = dateCol.split(', ');
+            if (dateParts.length !== 2) return true; // Invalid format, include row
+
+            var dateStr = dateParts[0] + ' ' + dateParts[1].split(' ')[0];
+            var rowDate = new Date(dateStr);
+
+            // If no date filters are set, include the row
+            if (!fromDate && !toDate) return true;
+
+            // Check if the row date is within the range
+            if (fromDate && !toDate) {
+                return rowDate >= new Date(fromDate);
+            } else if (!fromDate && toDate) {
+                return rowDate <= new Date(toDate);
+            } else {
+                return rowDate >= new Date(fromDate) && rowDate <= new Date(toDate);
+            }
+        }
+    );
+
+    // Apply date filters when changed
+    $('#date-from, #date-to').on('change', function() {
+        table.draw();
+    });
+
+    // Field-specific filtering
+    var fieldFilterSelect = $('#field-filter');
+    var fieldValueInput = $('#field-value');
+
+    // Function to handle field filtering
+    function applyFieldFilter() {
+        var fieldName = fieldFilterSelect.val();
+        var fieldValue = fieldValueInput.val().toLowerCase();
+
+        if (!fieldName || !fieldValue) {
+            // If either field is empty, clear the search
+            table.search('').columns().search('').draw();
+            return;
+        }
+
+        // Find the column index for the selected field
+        var columnIndex = -1;
+        $('#submissionsTable thead th').each(function(index) {
+            if ($(this).text() === fieldName) {
+                columnIndex = index;
+                return false; // Break the loop
+            }
+        });
+
+        if (columnIndex !== -1) {
+            // Clear other searches and apply this one
+            table.search('').columns().search('').draw();
+            table.column(columnIndex).search(fieldValue, true, false).draw();
+        }
+    }
+
+    // Apply field filter when changed
+    fieldFilterSelect.on('change', applyFieldFilter);
+    fieldValueInput.on('keyup', applyFieldFilter);
+
+    // Reset all filters
+    $('#reset-filters').on('click', function() {
+        // Reset custom filters
+        $('#employee-filter').val('');
+        $('#date-from').val('');
+        $('#date-to').val('');
+        $('#field-filter').val('');
+        $('#field-value').val('');
+
+        // Reset DataTable filters
+        table.search('').columns().search('').draw();
     });
 });
 </script>

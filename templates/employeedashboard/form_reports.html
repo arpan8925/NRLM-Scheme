@@ -1,0 +1,487 @@
+{% extends 'employeedashboard/base.html' %}
+{% load static %}
+
+{% block inner_title %}{{ form.title }} Reports{% endblock %}
+
+{% block inner_css %}
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+<style>
+    .reports-container {
+        padding: 1.5rem;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .page-header h2 {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0;
+        color: var(--text-primary);
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .btn-back {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-weight: 500;
+        transition: background-color 0.2s;
+        background: #4B5563;
+        color: white;
+    }
+
+    .btn-back:hover {
+        background: #374151;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card h3 {
+        color: var(--text-secondary);
+        margin: 0 0 1rem 0;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0 0 1rem 0;
+        color: var(--text-primary);
+    }
+
+    .chart-container {
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .chart-container h3 {
+        color: var(--text-secondary);
+        margin: 0 0 1.5rem 0;
+        font-size: 1.25rem;
+        font-weight: 500;
+    }
+
+    .chart-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .chart-wrapper {
+        position: relative;
+        height: 300px;
+    }
+
+    .table-container {
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+        overflow-x: auto;
+    }
+
+    .table-container h3 {
+        color: var(--text-secondary);
+        margin: 0 0 1.5rem 0;
+        font-size: 1.25rem;
+        font-weight: 500;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-primary);
+    }
+
+    .data-table th {
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .data-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .data-table tr:hover td {
+        background-color: rgba(99, 102, 241, 0.05);
+    }
+
+    .no-data {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-secondary);
+    }
+
+    /* DataTables Dark Theme Styling */
+    .dataTables_wrapper {
+        color: var(--text-primary);
+    }
+
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_processing,
+    .dataTables_wrapper .dataTables_paginate {
+        color: var(--text-primary);
+    }
+
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+        background-color: var(--background-dark, #1a1b26);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 0.25rem 0.5rem;
+    }
+
+    /* Style for select elements and options */
+    select, select option {
+        background-color: var(--background-dark, #1a1b26);
+        color: var(--text-primary);
+    }
+
+    /* Column filter styling */
+    table.dataTable thead th select {
+        width: 100%;
+        background-color: var(--background-dark, #1a1b26);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 0.25rem;
+        margin-top: 0.5rem;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-color);
+        background-color: var(--card-bg);
+        border-radius: 4px;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+        color: white !important;
+        border: 1px solid var(--primary-color);
+        background: var(--primary-color);
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        color: white !important;
+        border: 1px solid var(--secondary-color);
+        background: var(--secondary-color);
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+        color: var(--text-secondary) !important;
+        border: 1px solid var(--border-color);
+        background-color: transparent;
+    }
+
+    table.dataTable thead th,
+    table.dataTable thead td {
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    table.dataTable.no-footer {
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    /* Remove white background from DataTables */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_processing,
+    .dataTables_wrapper .dataTables_paginate,
+    .dataTables_wrapper .dataTables_scroll,
+    table.dataTable tbody tr,
+    table.dataTable.stripe tbody tr.odd,
+    table.dataTable.display tbody tr.odd,
+    table.dataTable.hover tbody tr:hover,
+    table.dataTable.display tbody tr:hover,
+    table.dataTable.order-column tbody tr > .sorting_1,
+    table.dataTable.display tbody tr > .sorting_1 {
+        background-color: transparent !important;
+    }
+
+    /* Fix odd/even row styling */
+    table.dataTable.stripe tbody tr.odd,
+    table.dataTable.display tbody tr.odd {
+        background-color: rgba(255, 255, 255, 0.03) !important;
+    }
+
+    /* Fix hover state */
+    table.dataTable.hover tbody tr:hover,
+    table.dataTable.display tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    @media (max-width: 992px) {
+        .chart-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="reports-container">
+    <div class="page-header">
+        <h2>
+            <i class="fas fa-chart-bar"></i>
+            Reports for: {{ form.title }}
+        </h2>
+        <div class="header-actions">
+            <a href="{% url 'employeedashboard:reports' %}" class="btn-back">
+                <i class="fas fa-arrow-left"></i>
+                Back to Reports
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Submissions</h3>
+            <p class="stat-number">{{ submissions_count }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Active Blocks</h3>
+            <p class="stat-number">{{ blocks.count }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Form Created</h3>
+            <p class="stat-number">{{ form.created_at|date:"M d, Y" }}</p>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="chart-row">
+        <div class="chart-container">
+            <h3>Submissions by Block</h3>
+            <div class="chart-wrapper">
+                <canvas id="blockSubmissionsChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-container">
+            <h3>Submissions Over Time</h3>
+            <div class="chart-wrapper">
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <h3>Monthly Submissions</h3>
+        <div class="chart-wrapper">
+            <canvas id="monthlyChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Tables -->
+    <div class="table-container">
+        <h3>Block Submission Details</h3>
+        {% if block_submission_counts %}
+        <table id="blockSubmissionsTable" class="data-table display">
+            <thead>
+                <tr>
+                    <th>Block</th>
+                    <th>Submissions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for block in block_submission_counts %}
+                <tr>
+                    <td>{{ block.block }}</td>
+                    <td>{{ block.submission_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="no-data">No block submission data available</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block inner_js %}
+<!-- Include jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Include DataTables -->
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<script>
+    // Set default Chart.js options for dark theme
+    Chart.defaults.color = '#E5E7EB';
+    Chart.defaults.borderColor = '#2D3A4A';
+
+    // Function to generate random colors
+    function generateColors(count) {
+        const colors = [];
+        for (let i = 0; i < count; i++) {
+            const hue = (i * 137) % 360; // Use golden angle to get evenly distributed colors
+            colors.push(`hsl(${hue}, 70%, 60%)`);
+        }
+        return colors;
+    }
+
+    // Block Submissions Chart
+    const blockSubmissionsCtx = document.getElementById('blockSubmissionsChart').getContext('2d');
+    const blockSubmissionsData = {
+        labels: [{% for block in block_submission_counts %}'{{ block.block|escapejs }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Submissions',
+            data: [{% for block in block_submission_counts %}{{ block.submission_count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: generateColors({{ block_submission_counts|length }}),
+            borderWidth: 1
+        }]
+    };
+
+    new Chart(blockSubmissionsCtx, {
+        type: 'pie',
+        data: blockSubmissionsData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        boxWidth: 15,
+                        padding: 15
+                    }
+                }
+            }
+        }
+    });
+
+    // Timeline Chart
+    const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+    const timelineData = {
+        labels: [{% for item in date_submission_counts %}'{{ item.date|date:"M d" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Daily Submissions',
+            data: [{% for item in date_submission_counts %}{{ item.submission_count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            borderColor: '#4F46E5',
+            backgroundColor: 'rgba(79, 70, 229, 0.2)',
+            tension: 0.4,
+            fill: true
+        }]
+    };
+
+    new Chart(timelineCtx, {
+        type: 'line',
+        data: timelineData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+
+    // Monthly Chart
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    const monthlyData = {
+        labels: [{% for item in month_submission_counts %}'{{ item.month|date:"F Y" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Monthly Submissions',
+            data: [{% for item in month_submission_counts %}{{ item.submission_count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: '#6366F1',
+            borderWidth: 0,
+            borderRadius: 4
+        }]
+    };
+
+    new Chart(monthlyCtx, {
+        type: 'bar',
+        data: monthlyData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+
+    // Initialize DataTables
+    $(document).ready(function() {
+        // Block Submissions Table
+        $('#blockSubmissionsTable').DataTable({
+            responsive: true,
+            order: [[1, 'desc']], // Sort by submissions count
+            pageLength: 10,
+            lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
+            language: {
+                search: "Search blocks:",
+                lengthMenu: "Show _MENU_ blocks per page",
+                info: "Showing _START_ to _END_ of _TOTAL_ blocks",
+                emptyTable: "No block data available",
+                zeroRecords: "No matching blocks found"
+            },
+            initComplete: function() {
+                // Apply dark theme to all select elements
+                $('.dataTables_length select').css({
+                    'background-color': 'var(--background-dark, #1a1b26)',
+                    'color': '#E5E7EB',
+                    'border': '1px solid var(--border-color)'
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

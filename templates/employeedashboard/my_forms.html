@@ -70,10 +70,15 @@
         gap: 0.5rem;
     }
 
-    .view-form-btn {
-        background: var(--primary-color);
-        color: white;
-        padding: 0.75rem 1rem;
+    .form-actions {
+        display: flex;
+        gap: 0.75rem;
+        width: 100%;
+    }
+
+    .view-form-btn, .view-reports-btn {
+        flex: 1;
+        padding: 0.75rem 0.5rem;
         border-radius: 8px;
         text-decoration: none;
         text-align: center;
@@ -81,11 +86,28 @@
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
-        transition: background 0.3s ease;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+
+    .view-form-btn {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .view-reports-btn {
+        background: var(--secondary-color, #4c1d95);
+        color: white;
     }
 
     .view-form-btn:hover {
         background: var(--secondary-color);
+        transform: translateY(-2px);
+    }
+
+    .view-reports-btn:hover {
+        background: var(--primary-color);
+        transform: translateY(-2px);
     }
 
     .empty-state {
@@ -137,9 +159,14 @@
                             </span>
                         </div>
                     </div>
-                    <a href="{% url 'form_builder:view_form' form.slug %}" class="view-form-btn">
-                        <i class="fas fa-eye"></i> View Form
-                    </a>
+                    <div class="form-actions">
+                        <a href="{% url 'form_builder:view_form' form.slug %}" class="view-form-btn">
+                            <i class="fas fa-eye"></i> View Form
+                        </a>
+                        <a href="{% url 'employeedashboard:form_reports' form.slug %}" class="view-reports-btn">
+                            <i class="fas fa-chart-bar"></i> View Reports
+                        </a>
+                    </div>
                 </div>
             {% endfor %}
         </div>

@@ -9,4 +9,6 @@ urlpatterns = [
     path('forms/<slug:slug>/', views.view_form, name='view_form'),
     path('submissions/', views.my_submissions, name='my_submissions'),
     path('profile/', views.profile, name='profile'),
+    path('reports/', views.reports, name='reports'),
+    path('reports/form/<slug:slug>/', views.form_reports, name='form_reports'),
 ]

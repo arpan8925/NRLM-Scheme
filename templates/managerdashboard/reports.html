@@ -1,0 +1,804 @@
+{% extends 'managerdashboard/base.html' %}
+{% load static %}
+
+{% block inner_title %}Reports{% endblock %}
+
+{% block inner_css %}
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+<style>
+    .reports-container {
+        padding: 1.5rem;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .page-header h2 {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card h3 {
+        color: var(--text-secondary);
+        margin: 0 0 1rem 0;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0 0 1rem 0;
+    }
+
+    .chart-container {
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .chart-container h3 {
+        color: var(--text-secondary);
+        margin: 0 0 1.5rem 0;
+        font-size: 1.25rem;
+        font-weight: 500;
+    }
+
+    .chart-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .chart-wrapper {
+        position: relative;
+        height: 300px;
+    }
+
+    table.dataTable.stripe tbody tr.odd, table.dataTable.display tbody tr.odd {
+        background-color: #2f2f2f45;
+    }
+
+    .sorting_1{
+        background-color: #2f2f2f45;
+    }
+
+    td.sorting_1 {
+        background: #2f2f2f45 !important;
+    }
+
+    .sorting_2{
+        background-color: #2f2f2f45 !important;
+    }
+
+    .table-container {
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+        overflow-x: auto;
+    }
+
+    .table-container h3 {
+        color: var(--text-secondary);
+        margin: 0 0 1.5rem 0;
+        font-size: 1.25rem;
+        font-weight: 500;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: transparent !important;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+        background-color: transparent !important;
+    }
+
+    .data-table th {
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .data-table tr {
+        background-color: transparent !important;
+    }
+
+    .data-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .data-table tr:hover td {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    .no-data {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-secondary);
+    }
+
+    @media (max-width: 992px) {
+        .chart-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* DataTables Dark Theme Styling */
+    .dataTables_wrapper {
+        color: var(--text-primary);
+    }
+
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_processing,
+    .dataTables_wrapper .dataTables_paginate {
+        color: var(--text-primary);
+    }
+
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+        background-color: var(--background-dark);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-color);
+        background-color: var(--card-bg);
+        border-radius: 4px;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+        color: white !important;
+        border: 1px solid var(--primary-color);
+        background: var(--primary-color);
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        color: white !important;
+        border: 1px solid var(--secondary-color);
+        background: var(--secondary-color);
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+        color: var(--text-secondary) !important;
+        border: 1px solid var(--border-color);
+        background-color: transparent;
+    }
+
+    table.dataTable thead th,
+    table.dataTable thead td {
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    table.dataTable.no-footer {
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    /* Remove white background from DataTables */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_processing,
+    .dataTables_wrapper .dataTables_paginate,
+    .dataTables_wrapper .dataTables_scroll,
+    table.dataTable tbody tr,
+    table.dataTable.stripe tbody tr.odd,
+    table.dataTable.display tbody tr.odd,
+    table.dataTable.hover tbody tr:hover,
+    table.dataTable.display tbody tr:hover,
+    table.dataTable.order-column tbody tr > .sorting_1,
+    table.dataTable.display tbody tr > .sorting_1 {
+        background-color: transparent !important;
+    }
+
+    /* Fix odd/even row styling */
+    table.dataTable.stripe tbody tr.odd,
+    table.dataTable.display tbody tr.odd {
+        background-color: rgba(255, 255, 255, 0.03) !important;
+    }
+
+    /* Fix hover state */
+    table.dataTable.hover tbody tr:hover,
+    table.dataTable.display tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    /* Column filter styling */
+    table.dataTable thead th select {
+        width: 100%;
+        background-color: var(--background-dark);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 0.25rem;
+        margin-top: 0.5rem;
+    }
+
+    /* Make all select elements in the page dark */
+    select {
+        background-color: var(--background-dark);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 0.25rem;
+    }
+
+    /* Style select options for better visibility */
+    select option {
+        background-color: var(--background-dark);
+        color: var(--text-primary);
+    }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="reports-container">
+    <div class="page-header">
+        <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            Reports & Analytics
+        </h2>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>Total Forms</h3>
+            <p class="stat-number">{{ forms.count }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Submissions</h3>
+            <p class="stat-number">{{ submissions_count }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Active Blocks</h3>
+            <p class="stat-number">{{ blocks.count }}</p>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="chart-row">
+        <div class="chart-container">
+            <h3>Submissions by Form</h3>
+            <div class="chart-wrapper">
+                <canvas id="formSubmissionsChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-container">
+            <h3>Submissions by Block</h3>
+            <div class="chart-wrapper">
+                <canvas id="blockSubmissionsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-row">
+        <div class="chart-container">
+            <h3>Submissions Over Time</h3>
+            <div class="chart-wrapper">
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-container">
+            <h3>Monthly Submissions</h3>
+            <div class="chart-wrapper">
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <h3>Form Submissions by Block</h3>
+        <div class="chart-wrapper" style="height: 400px;">
+            <canvas id="formBlockChart"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <h3>Block-Form Submission Heatmap</h3>
+        <div class="chart-wrapper" style="height: 500px;">
+            <canvas id="heatmapChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Tables -->
+    <div class="table-container">
+        <h3>Form Submission Details</h3>
+        {% if form_submission_counts %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Form Title</th>
+                    <th>Submissions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for form in form_submission_counts %}
+                <tr>
+                    <td>{{ form.title }}</td>
+                    <td>{{ form.submission_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="no-data">No form submission data available</div>
+        {% endif %}
+    </div>
+
+    <div class="table-container">
+        <h3>Block Submission Details</h3>
+        {% if block_submission_counts %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Block</th>
+                    <th>Submissions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for block in block_submission_counts %}
+                <tr>
+                    <td>{{ block.block }}</td>
+                    <td>{{ block.submission_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="no-data">No block submission data available</div>
+        {% endif %}
+    </div>
+
+    <!-- Detailed Block, Form, Submission Table -->
+    <div class="table-container">
+        <h3>Detailed Submission Breakdown</h3>
+        {% if detailed_submission_counts %}
+        <table id="detailedSubmissionsTable" class="data-table display">
+            <thead>
+                <tr>
+                    <th>Block</th>
+                    <th>Form</th>
+                    <th>Submissions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in detailed_submission_counts %}
+                <tr>
+                    <td>{{ item.block }}</td>
+                    <td>{{ item.form }}</td>
+                    <td>{{ item.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="no-data">No detailed submission data available</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block inner_js %}
+<!-- Include jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Include DataTables -->
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<script>
+    // Set default Chart.js options for dark theme
+    Chart.defaults.color = '#E5E7EB';
+    Chart.defaults.borderColor = '#2D3A4A';
+
+    // Function to generate random colors
+    function generateColors(count) {
+        const colors = [];
+        for (let i = 0; i < count; i++) {
+            const hue = (i * 137) % 360; // Use golden angle to get evenly distributed colors
+            colors.push(`hsl(${hue}, 70%, 60%)`);
+        }
+        return colors;
+    }
+
+    // Form Submissions Chart
+    const formSubmissionsCtx = document.getElementById('formSubmissionsChart').getContext('2d');
+    const formSubmissionsData = {
+        labels: [{% for form in form_submission_counts %}'{{ form.title|escapejs }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Submissions',
+            data: [{% for form in form_submission_counts %}{{ form.submission_count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: generateColors({{ form_submission_counts|length }}),
+            borderWidth: 1
+        }]
+    };
+
+    new Chart(formSubmissionsCtx, {
+        type: 'pie',
+        data: formSubmissionsData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        boxWidth: 15,
+                        padding: 15
+                    }
+                }
+            }
+        }
+    });
+
+    // Block Submissions Chart
+    const blockSubmissionsCtx = document.getElementById('blockSubmissionsChart').getContext('2d');
+    const blockSubmissionsData = {
+        labels: [{% for block in block_submission_counts %}'{{ block.block|escapejs }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Submissions',
+            data: [{% for block in block_submission_counts %}{{ block.submission_count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: generateColors({{ block_submission_counts|length }}),
+            borderWidth: 1
+        }]
+    };
+
+    new Chart(blockSubmissionsCtx, {
+        type: 'doughnut',
+        data: blockSubmissionsData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        boxWidth: 15,
+                        padding: 15
+                    }
+                }
+            }
+        }
+    });
+
+    // Timeline Chart
+    const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+    const timelineData = {
+        labels: [{% for item in date_submission_counts %}'{{ item.date|date:"M d" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Daily Submissions',
+            data: [{% for item in date_submission_counts %}{{ item.submission_count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            borderColor: '#4F46E5',
+            backgroundColor: 'rgba(79, 70, 229, 0.2)',
+            tension: 0.4,
+            fill: true
+        }]
+    };
+
+    new Chart(timelineCtx, {
+        type: 'line',
+        data: timelineData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+
+    // Monthly Chart
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    const monthlyData = {
+        labels: [{% for item in month_submission_counts %}'{{ item.month|date:"F Y" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Monthly Submissions',
+            data: [{% for item in month_submission_counts %}{{ item.submission_count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: '#6366F1',
+            borderWidth: 0,
+            borderRadius: 4
+        }]
+    };
+
+    new Chart(monthlyCtx, {
+        type: 'bar',
+        data: monthlyData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+
+    // Form Block Chart (Stacked Bar Chart)
+    const formBlockCtx = document.getElementById('formBlockChart').getContext('2d');
+
+    // Prepare data for stacked bar chart
+    const formBlockLabels = [];
+    const formBlockDatasets = [];
+    const blockColors = generateColors(50); // Generate enough colors for all blocks
+
+    // Get unique blocks across all forms
+    const uniqueBlocks = new Set();
+    {% for form_data in form_block_submission_counts %}
+        {% for block_data in form_data.block_counts %}
+            uniqueBlocks.add('{{ block_data.block|escapejs }}');
+        {% endfor %}
+    {% endfor %}
+
+    // Convert Set to Array
+    const allBlocks = Array.from(uniqueBlocks);
+
+    // Create datasets for each block
+    allBlocks.forEach((block, index) => {
+        const dataset = {
+            label: block,
+            backgroundColor: blockColors[index],
+            data: []
+        };
+
+        // For each form, find the submission count for this block
+        {% for form_data in form_block_submission_counts %}
+            formBlockLabels.push('{{ form_data.form_title|escapejs }}');
+
+            let found = false;
+            {% for block_data in form_data.block_counts %}
+                if ('{{ block_data.block|escapejs }}' === block) {
+                    dataset.data.push({{ block_data.submission_count }});
+                    found = true;
+                }
+            {% endfor %}
+
+            if (!found) {
+                dataset.data.push(0);
+            }
+        {% endfor %}
+
+        formBlockDatasets.push(dataset);
+    });
+
+    // Create the stacked bar chart
+    new Chart(formBlockCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for form_data in form_block_submission_counts %}'{{ form_data.form_title|escapejs }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: formBlockDatasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    stacked: true
+                },
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+
+    // Create the heatmap chart
+    const heatmapCtx = document.getElementById('heatmapChart').getContext('2d');
+
+    // Get unique blocks and forms for the heatmap
+    const heatmapBlocks = [];
+    const heatmapForms = [];
+    const heatmapData = [];
+
+    {% for item in detailed_submission_counts %}
+        if (!heatmapBlocks.includes('{{ item.block|escapejs }}')) {
+            heatmapBlocks.push('{{ item.block|escapejs }}');
+        }
+        if (!heatmapForms.includes('{{ item.form|escapejs }}')) {
+            heatmapForms.push('{{ item.form|escapejs }}');
+        }
+    {% endfor %}
+
+    // Create the data array for the heatmap
+    for (let i = 0; i < heatmapBlocks.length; i++) {
+        const row = [];
+        for (let j = 0; j < heatmapForms.length; j++) {
+            // Default value is 0
+            row.push(0);
+        }
+        heatmapData.push(row);
+    }
+
+    // Fill in the data
+    {% for item in detailed_submission_counts %}
+        const blockIndex = heatmapBlocks.indexOf('{{ item.block|escapejs }}');
+        const formIndex = heatmapForms.indexOf('{{ item.form|escapejs }}');
+        if (blockIndex !== -1 && formIndex !== -1) {
+            heatmapData[blockIndex][formIndex] = {{ item.count }};
+        }
+    {% endfor %}
+
+    // Create datasets for the heatmap
+    const heatmapDatasets = [];
+    for (let i = 0; i < heatmapBlocks.length; i++) {
+        heatmapDatasets.push({
+            label: heatmapBlocks[i],
+            data: heatmapData[i],
+            backgroundColor: generateColors(1)[0],
+            borderWidth: 1,
+            borderColor: '#2D3A4A'
+        });
+    }
+
+    // Create the heatmap chart
+    new Chart(heatmapCtx, {
+        type: 'bar',
+        data: {
+            labels: heatmapForms,
+            datasets: heatmapDatasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',  // Horizontal bars
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    },
+                    title: {
+                        display: true,
+                        text: 'Number of Submissions'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Form Title'
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            return `Block: ${context[0].dataset.label}`;
+                        },
+                        label: function(context) {
+                            return `Form: ${context.label}, Submissions: ${context.raw}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Initialize DataTable for detailed submissions
+    $(document).ready(function() {
+        $('#detailedSubmissionsTable').DataTable({
+            responsive: true,
+            order: [[0, 'asc'], [1, 'asc']], // Sort by Block, then Form
+            pageLength: 25, // Show 25 entries per page
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+            language: {
+                search: "Search submissions:",
+                lengthMenu: "Show _MENU_ entries per page",
+                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                emptyTable: "No submission data available",
+                zeroRecords: "No matching submissions found"
+            },
+            initComplete: function() {
+                // Add a select filter for the Block column (0)
+                this.api().columns(0).every(function() {
+                    var column = this;
+                    var select = $('<select class="dark-select"><option value="">All Blocks</option></select>')
+                        .appendTo($(column.header()).empty())
+                        .on('change', function() {
+                            var val = $.fn.dataTable.util.escapeRegex(
+                                $(this).val()
+                            );
+                            column
+                                .search(val ? '^'+val+'$' : '', true, false)
+                                .draw();
+                        });
+
+                    column.data().unique().sort().each(function(d, j) {
+                        select.append('<option value="'+d+'">'+d+'</option>');
+                    });
+                });
+
+                // Add a select filter for the Form column (1)
+                this.api().columns(1).every(function() {
+                    var column = this;
+                    var select = $('<select class="dark-select"><option value="">All Forms</option></select>')
+                        .appendTo($(column.header()).empty())
+                        .on('change', function() {
+                            var val = $.fn.dataTable.util.escapeRegex(
+                                $(this).val()
+                            );
+                            column
+                                .search(val ? '^'+val+'$' : '', true, false)
+                                .draw();
+                        });
+
+                    column.data().unique().sort().each(function(d, j) {
+                        select.append('<option value="'+d+'">'+d+'</option>');
+                    });
+                });
+
+                // Apply dark theme to all select elements
+                $('.dark-select').css({
+                    'background-color': 'var(--background-dark)',
+                    'color': 'var(--text-primary)',
+                    'border': '1px solid var(--border-color)',
+                    'border-radius': '4px',
+                    'padding': '0.25rem'
+                });
+
+                // Apply dark theme to DataTables length menu
+                $('.dataTables_length select').css({
+                    'background-color': 'var(--background-dark)',
+                    'color': 'var(--text-primary)',
+                    'border': '1px solid var(--border-color)'
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

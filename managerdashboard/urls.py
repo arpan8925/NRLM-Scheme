@@ -20,4 +20,5 @@ urlpatterns = [
     path('forms/delete/<slug:slug>/', views.delete_form, name='delete_form'),
     path('forms/export/<slug:slug>/', views.export_form_submissions, name='export_form_submissions'),
     path('forms/submissions/<slug:slug>/', views.form_submissions, name='form_submissions'),
+    path('reports/', views.reports, name='reports'),
 ]

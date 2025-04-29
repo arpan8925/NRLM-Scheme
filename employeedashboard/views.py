@@ -3,6 +3,9 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from form_builder.models import Form, FormSubmission
 from accounts.models import User
+from django.db.models import Count, Q
+from django.db.models.functions import TruncDate, TruncMonth, TruncWeek
+from datetime import datetime, timedelta
 import json
 
 def is_employee(user):
@@ -100,3 +103,188 @@ def view_form(request, slug):
     }
 
     return render(request, 'form_builder/view_form.html', context)
+
+@login_required
+@user_passes_test(is_employee)
+def reports(request):
+    """
+    Display reports and visualizations for all forms
+    """
+    # Get all forms
+    forms = Form.objects.filter(is_published=True)
+
+    # Get all submissions
+    submissions = FormSubmission.objects.all()
+
+    # Get all blocks that have submissions
+    blocks = User.objects.filter(
+        role=User.BLOCK_EMPLOYEE,
+        form_submissions__isnull=False
+    ).values('block').distinct()
+
+    # Get submission counts by form
+    form_submission_counts = Form.objects.filter(
+        is_published=True
+    ).annotate(
+        submission_count=Count('submissions')
+    ).values('title', 'submission_count').order_by('-submission_count')
+
+    # Get submission counts by block
+    block_submission_counts = User.objects.filter(
+        role=User.BLOCK_EMPLOYEE,
+        form_submissions__isnull=False
+    ).values('block').annotate(
+        submission_count=Count('form_submissions')
+    ).order_by('-submission_count')
+
+    # Get submission counts by form and block
+    form_block_submission_counts = []
+    for form in forms:
+        block_counts = User.objects.filter(
+            role=User.BLOCK_EMPLOYEE,
+            form_submissions__form=form
+        ).values('block').annotate(
+            submission_count=Count('form_submissions')
+        ).order_by('-submission_count')
+
+        if block_counts:
+            form_block_submission_counts.append({
+                'form_title': form.title,
+                'form_id': form.id,
+                'form_slug': form.slug,
+                'block_counts': list(block_counts)
+            })
+
+    # Get submission counts by date (last 30 days)
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    date_submission_counts = FormSubmission.objects.filter(
+        created_at__gte=thirty_days_ago
+    ).annotate(
+        date=TruncDate('created_at')
+    ).values('date').annotate(
+        submission_count=Count('id')
+    ).order_by('date')
+
+    # Get submission counts by month
+    month_submission_counts = FormSubmission.objects.annotate(
+        month=TruncMonth('created_at')
+    ).values('month').annotate(
+        submission_count=Count('id')
+    ).order_by('month')
+
+    # Get detailed breakdown of Block, Form, and Submission count
+    detailed_submission_counts = []
+
+    # Query to get all combinations of block, form, and count
+    block_form_counts = FormSubmission.objects.filter(
+        employee__role=User.BLOCK_EMPLOYEE
+    ).values(
+        'employee__block',
+        'form__title',
+        'form__slug'
+    ).annotate(
+        submission_count=Count('id')
+    ).order_by('employee__block', 'form__title')
+
+    # Convert to a more usable format
+    for item in block_form_counts:
+        detailed_submission_counts.append({
+            'block': item['employee__block'],
+            'form': item['form__title'],
+            'form_slug': item['form__slug'],
+            'count': item['submission_count']
+        })
+
+    context = {
+        'forms': forms,
+        'submissions_count': submissions.count(),
+        'blocks': blocks,
+        'form_submission_counts': list(form_submission_counts),
+        'block_submission_counts': list(block_submission_counts),
+        'form_block_submission_counts': form_block_submission_counts,
+        'date_submission_counts': list(date_submission_counts),
+        'month_submission_counts': list(month_submission_counts),
+        'detailed_submission_counts': detailed_submission_counts,
+        'user': request.user,
+    }
+
+    return render(request, 'employeedashboard/reports.html', context)
+
+@login_required
+@user_passes_test(is_employee)
+def form_reports(request, slug):
+    """
+    Display reports and visualizations for a specific form
+    """
+    # Get the form
+    form = get_object_or_404(Form, slug=slug, is_published=True)
+
+    # Get all submissions for this form
+    submissions = FormSubmission.objects.filter(form=form)
+
+    # Get all blocks that have submissions for this form
+    blocks = User.objects.filter(
+        role=User.BLOCK_EMPLOYEE,
+        form_submissions__form=form
+    ).values('block').distinct()
+
+    # Get submission counts by block for this form
+    block_submission_counts = User.objects.filter(
+        role=User.BLOCK_EMPLOYEE,
+        form_submissions__form=form
+    ).values('block').annotate(
+        submission_count=Count('form_submissions')
+    ).order_by('-submission_count')
+
+    # Get submission counts by date (last 30 days) for this form
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    date_submission_counts = FormSubmission.objects.filter(
+        form=form,
+        created_at__gte=thirty_days_ago
+    ).annotate(
+        date=TruncDate('created_at')
+    ).values('date').annotate(
+        submission_count=Count('id')
+    ).order_by('date')
+
+    # Get submission counts by month for this form
+    month_submission_counts = FormSubmission.objects.filter(
+        form=form
+    ).annotate(
+        month=TruncMonth('created_at')
+    ).values('month').annotate(
+        submission_count=Count('id')
+    ).order_by('month')
+
+    # Get detailed breakdown of Block and Submission count for this form
+    detailed_submission_counts = []
+
+    # Query to get all blocks and their submission counts for this form
+    block_counts = FormSubmission.objects.filter(
+        form=form,
+        employee__role=User.BLOCK_EMPLOYEE
+    ).values(
+        'employee__block'
+    ).annotate(
+        submission_count=Count('id')
+    ).order_by('-submission_count')
+
+    # Convert to a more usable format
+    for item in block_counts:
+        detailed_submission_counts.append({
+            'block': item['employee__block'],
+            'count': item['submission_count']
+        })
+
+    context = {
+        'form': form,
+        'submissions_count': submissions.count(),
+        'blocks': blocks,
+        'block_submission_counts': list(block_submission_counts),
+        'date_submission_counts': list(date_submission_counts),
+        'month_submission_counts': list(month_submission_counts),
+        'detailed_submission_counts': detailed_submission_counts,
+        'user': request.user,
+    }
+
+    return render(request, 'employeedashboard/form_reports.html', context)
