@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-*x#nrw#c+kmk)dha+ie3d49@_@_94j383p32*es879ms90#i35'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -154,11 +154,7 @@ CORS_ALLOW_ALL_ORIGINS = True  # For development only, set to False in productio
 CORS_ALLOW_CREDENTIALS = True  # Allow cookies to be sent with requests
 
 # Specific origins that are allowed to make cross-origin requests
-CORS_ALLOWED_ORIGINS = [
-    "https://nrlm.fliptechy.in",
-    "https://cdn.lokos.in",
-    "https://apisetu.gov.in",
-]
+CORS_ORIGIN_ALLOW_ALL = True
 
 # Allow specific HTTP methods
 CORS_ALLOW_METHODS = [
