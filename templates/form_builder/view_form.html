@@ -251,14 +251,20 @@
 
         if (dynamicDropdowns.length > 0) {
             // Fetch user location data
-            fetch('/forms/api/user-location/')
+            fetch('/forms/api/user-location/', {
+                credentials: 'same-origin',  // Include cookies for authentication
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'  // Identify as AJAX request
+                }
+            })
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('Failed to fetch user location data');
+                        throw new Error(`Failed to fetch user location data: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(locationData => {
+                    console.log('User location data:', locationData);
                     // Process each dynamic dropdown
                     dynamicDropdowns.forEach(dropdown => {
                         const fieldType = dropdown.getAttribute('data-field-type');
@@ -266,10 +272,15 @@
                         if (fieldType === 'village_list') {
                             // Fetch villages using user's location
                             fetch('/forms/api/villages/')
-                                .then(response => response.json())
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error(`HTTP error! Status: ${response.status}`);
+                                    }
+                                    return response.json();
+                                })
                                 .then(villages => {
                                     // Check if we have a list of panchayats with nested villages
-                                    if (villages.length > 0 && villages[0].villagelist) {
+                                    if (villages && Array.isArray(villages) && villages.length > 0 && villages[0].villagelist) {
                                         // Process nested village structure
                                         populateNestedVillageDropdown(dropdown, villages);
                                     } else {
@@ -279,40 +290,55 @@
                                 })
                                 .catch(error => {
                                     console.error('Error fetching villages:', error);
-                                    dropdown.innerHTML = '<option value="">Failed to load villages</option>';
+                                    dropdown.innerHTML = '<option value="">No villages available</option>';
                                 });
                         } else if (fieldType === 'shg_list') {
                             // Fetch SHGs using user's location
                             fetch('/forms/api/shgs/')
-                                .then(response => response.json())
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error(`HTTP error! Status: ${response.status}`);
+                                    }
+                                    return response.json();
+                                })
                                 .then(shgs => {
                                     populateDropdownWithLowercaseValues(dropdown, shgs, 'shg_name');
                                 })
                                 .catch(error => {
                                     console.error('Error fetching SHGs:', error);
-                                    dropdown.innerHTML = '<option value="">Failed to load SHGs</option>';
+                                    dropdown.innerHTML = '<option value="">No SHGs available</option>';
                                 });
                         } else if (fieldType === 'vo_list') {
                             // Fetch VOs using user's location
                             fetch('/forms/api/vos/')
-                                .then(response => response.json())
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error(`HTTP error! Status: ${response.status}`);
+                                    }
+                                    return response.json();
+                                })
                                 .then(vos => {
                                     populateDropdownWithLowercaseValues(dropdown, vos, 'vo_name');
                                 })
                                 .catch(error => {
                                     console.error('Error fetching VOs:', error);
-                                    dropdown.innerHTML = '<option value="">Failed to load VOs</option>';
+                                    dropdown.innerHTML = '<option value="">No VOs available</option>';
                                 });
                         } else if (fieldType === 'clf_list') {
                             // Fetch CLFs using user's location
                             fetch('/forms/api/clfs/')
-                                .then(response => response.json())
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error(`HTTP error! Status: ${response.status}`);
+                                    }
+                                    return response.json();
+                                })
                                 .then(clfs => {
                                     populateDropdownWithLowercaseValues(dropdown, clfs, 'clf_name');
                                 })
                                 .catch(error => {
                                     console.error('Error fetching CLFs:', error);
-                                    dropdown.innerHTML = '<option value="">Failed to load CLFs</option>';
+                                    dropdown.innerHTML = '<option value="">No CLFs available</option>';
                                 });
                         }
                     });
@@ -330,6 +356,12 @@
             // Clear existing options
             dropdown.innerHTML = '<option value="">Select an option</option>';
 
+            // Check if items is an array and not empty
+            if (!items || !Array.isArray(items) || items.length === 0) {
+                dropdown.innerHTML = '<option value="">No options available</option>';
+                return;
+            }
+
             // Add new options
             items.forEach(item => {
                 const option = document.createElement('option');
@@ -343,6 +375,12 @@
         function populateDropdownWithLowercaseValues(dropdown, items, nameField) {
             // Clear existing options
             dropdown.innerHTML = '<option value="">Select an option</option>';
+
+            // Check if items is an array and not empty
+            if (!items || !Array.isArray(items) || items.length === 0) {
+                dropdown.innerHTML = '<option value="">No options available</option>';
+                return;
+            }
 
             // Add new options
             items.forEach(item => {
@@ -358,6 +396,12 @@
         function populateNestedVillageDropdown(dropdown, panchayats) {
             // Clear existing options
             dropdown.innerHTML = '<option value="">Select a village</option>';
+
+            // Check if panchayats is an array and not empty
+            if (!panchayats || !Array.isArray(panchayats) || panchayats.length === 0) {
+                dropdown.innerHTML = '<option value="">No villages available</option>';
+                return;
+            }
 
             // Process each panchayat
             panchayats.forEach(panchayat => {
@@ -387,6 +431,11 @@
                     });
                 }
             });
+
+            // If no villages were added, show a message
+            if (dropdown.options.length <= 1) {
+                dropdown.innerHTML = '<option value="">No villages available</option>';
+            }
         }
     });
 </script>

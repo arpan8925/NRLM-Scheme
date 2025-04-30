@@ -220,7 +220,8 @@ def fetch_villages(request, state_id=None, district_id=None, block_id=None):
 
         if not all([state_id, district_id, block_id]):
             print("[ERROR] Missing location data")
-            return JsonResponse({'error': 'Missing location data. User does not have complete location information.'}, status=400)
+            # Return empty array instead of error to prevent client-side errors
+            return JsonResponse([], safe=False)
 
         api_url = f'https://cdn.lokos.in/lokos-masterdata/state/{state_id}/district/{district_id}/block/{block_id}.json'
         print(f"[DEBUG] API URL: {api_url}")
@@ -237,11 +238,13 @@ def fetch_villages(request, state_id=None, district_id=None, block_id=None):
             return JsonResponse([], safe=False)
         else:
             print(f"[ERROR] Failed to fetch villages: {response.status_code} - {response.text}")
-            return JsonResponse({'error': f'Failed to fetch villages: {response.status_code}'}, status=response.status_code)
+            # Return empty array instead of error to prevent client-side errors
+            return JsonResponse([], safe=False)
 
     except Exception as e:
         print(f"[EXCEPTION] Exception occurred: {str(e)}")
-        return JsonResponse({'error': f'Error fetching villages: {str(e)}'}, status=500)
+        # Return empty array instead of error to prevent client-side errors
+        return JsonResponse([], safe=False)
 
 @login_required
 @require_http_methods(["GET"])
@@ -264,7 +267,9 @@ def fetch_shgs(request, state_code=None, block_id=None):
 
         # Check if we have all required location data
         if not all([state_code, block_id]):
-            return JsonResponse({'error': 'Missing location data. User does not have complete location information.'}, status=400)
+            print("[ERROR] Missing location data for SHGs")
+            # Return empty array instead of error to prevent client-side errors
+            return JsonResponse([], safe=False)
 
         # Make request to the SHG API with required headers
         headers = {
@@ -273,29 +278,39 @@ def fetch_shgs(request, state_code=None, block_id=None):
         }
 
         response = requests.get("https://cdn.lokos.in/lokos-masterdata/statemaster.json")
+        if response.status_code != 200:
+            print(f"[ERROR] Failed to fetch state master data: {response.status_code}")
+            return JsonResponse([], safe=False)
+
         data = response.json()
         target_state_id = int(state_code)
         state = next((item for item in data if item["state_id"] == target_state_id), None)
 
-        if state:
-            print(state["state_short_name_en"])
-        else:
-            print(f"No state found with state id {target_state_id}")
+        if not state:
+            print(f"[ERROR] No state found with state id {target_state_id}")
+            return JsonResponse([], safe=False)
 
-        response = requests.get(
-            f'https://apisetu.gov.in/mord/lokos/srv/v1/{state["state_short_name_en"]}/shg/block?block_id={block_id}',
-            headers=headers
-        )
+        print(f"[DEBUG] State short name: {state['state_short_name_en']}")
+
+        api_url = f'https://apisetu.gov.in/mord/lokos/srv/v1/{state["state_short_name_en"]}/shg/block?block_id={block_id}'
+        print(f"[DEBUG] SHG API URL: {api_url}")
+
+        response = requests.get(api_url, headers=headers)
+        print(f"[DEBUG] SHG API Response Status Code: {response.status_code}")
 
         # Check if the request was successful
         if response.status_code == 200:
             shgs = response.json()
             return JsonResponse(shgs, safe=False)
-        else:
-            return JsonResponse({'error': f'Failed to fetch SHGs: {response.status_code}'}, status=response.status_code)
+
+        print(f"[ERROR] Failed to fetch SHGs: {response.status_code} - {response.text}")
+        # Return empty array instead of error to prevent client-side errors
+        return JsonResponse([], safe=False)
 
     except Exception as e:
-        return JsonResponse({'error': f'Error fetching SHGs: {str(e)}'}, status=500)
+        print(f"[EXCEPTION] Error fetching SHGs: {str(e)}")
+        # Return empty array instead of error to prevent client-side errors
+        return JsonResponse([], safe=False)
 
 @login_required
 @require_http_methods(["GET"])
@@ -318,7 +333,9 @@ def fetch_vos(request, state_code=None, block_id=None):
 
         # Check if we have all required location data
         if not all([state_code, block_id]):
-            return JsonResponse({'error': 'Missing location data. User does not have complete location information.'}, status=400)
+            print("[ERROR] Missing location data for VOs")
+            # Return empty array instead of error to prevent client-side errors
+            return JsonResponse([], safe=False)
 
         # Make request to the VO API with required headers
         headers = {
@@ -327,29 +344,39 @@ def fetch_vos(request, state_code=None, block_id=None):
         }
 
         response = requests.get("https://cdn.lokos.in/lokos-masterdata/statemaster.json")
+        if response.status_code != 200:
+            print(f"[ERROR] Failed to fetch state master data: {response.status_code}")
+            return JsonResponse([], safe=False)
+
         data = response.json()
         target_state_id = int(state_code)
         state = next((item for item in data if item["state_id"] == target_state_id), None)
 
-        if state:
-            print(state["state_short_name_en"])
-        else:
-            print(f"No state found with state id {target_state_id}")
+        if not state:
+            print(f"[ERROR] No state found with state id {target_state_id}")
+            return JsonResponse([], safe=False)
 
-        response = requests.get(
-            f'https://apisetu.gov.in/mord/lokos/srv/v1/{state["state_short_name_en"]}/vo/block?block_id={block_id}',
-            headers=headers
-        )
+        print(f"[DEBUG] State short name: {state['state_short_name_en']}")
+
+        api_url = f'https://apisetu.gov.in/mord/lokos/srv/v1/{state["state_short_name_en"]}/vo/block?block_id={block_id}'
+        print(f"[DEBUG] VO API URL: {api_url}")
+
+        response = requests.get(api_url, headers=headers)
+        print(f"[DEBUG] VO API Response Status Code: {response.status_code}")
 
         # Check if the request was successful
         if response.status_code == 200:
             vos = response.json()
             return JsonResponse(vos, safe=False)
-        else:
-            return JsonResponse({'error': f'Failed to fetch VOs: {response.status_code}'}, status=response.status_code)
+
+        print(f"[ERROR] Failed to fetch VOs: {response.status_code} - {response.text}")
+        # Return empty array instead of error to prevent client-side errors
+        return JsonResponse([], safe=False)
 
     except Exception as e:
-        return JsonResponse({'error': f'Error fetching VOs: {str(e)}'}, status=500)
+        print(f"[EXCEPTION] Error fetching VOs: {str(e)}")
+        # Return empty array instead of error to prevent client-side errors
+        return JsonResponse([], safe=False)
 
 @login_required
 @require_http_methods(["GET"])
@@ -372,7 +399,9 @@ def fetch_clfs(request, state_code=None, block_id=None):
 
         # Check if we have all required location data
         if not all([state_code, block_id]):
-            return JsonResponse({'error': 'Missing location data. User does not have complete location information.'}, status=400)
+            print("[ERROR] Missing location data for CLFs")
+            # Return empty array instead of error to prevent client-side errors
+            return JsonResponse([], safe=False)
 
         # Make request to the CLF API with required headers
         headers = {
@@ -381,26 +410,36 @@ def fetch_clfs(request, state_code=None, block_id=None):
         }
 
         response = requests.get("https://cdn.lokos.in/lokos-masterdata/statemaster.json")
+        if response.status_code != 200:
+            print(f"[ERROR] Failed to fetch state master data: {response.status_code}")
+            return JsonResponse([], safe=False)
+
         data = response.json()
         target_state_id = int(state_code)
         state = next((item for item in data if item["state_id"] == target_state_id), None)
 
-        if state:
-            print(state["state_short_name_en"])
-        else:
-            print(f"No state found with state id {target_state_id}")
+        if not state:
+            print(f"[ERROR] No state found with state id {target_state_id}")
+            return JsonResponse([], safe=False)
 
-        response = requests.get(
-            f'https://apisetu.gov.in/mord/lokos/srv/v1/{state["state_short_name_en"]}/clf/block?block_id={block_id}',
-            headers=headers
-        )
+        print(f"[DEBUG] State short name: {state['state_short_name_en']}")
+
+        api_url = f'https://apisetu.gov.in/mord/lokos/srv/v1/{state["state_short_name_en"]}/clf/block?block_id={block_id}'
+        print(f"[DEBUG] CLF API URL: {api_url}")
+
+        response = requests.get(api_url, headers=headers)
+        print(f"[DEBUG] CLF API Response Status Code: {response.status_code}")
 
         # Check if the request was successful
         if response.status_code == 200:
             clfs = response.json()
             return JsonResponse(clfs, safe=False)
-        else:
-            return JsonResponse({'error': f'Failed to fetch CLFs: {response.status_code}'}, status=response.status_code)
+
+        print(f"[ERROR] Failed to fetch CLFs: {response.status_code} - {response.text}")
+        # Return empty array instead of error to prevent client-side errors
+        return JsonResponse([], safe=False)
 
     except Exception as e:
-        return JsonResponse({'error': f'Error fetching CLFs: {str(e)}'}, status=500)
+        print(f"[EXCEPTION] Error fetching CLFs: {str(e)}")
+        # Return empty array instead of error to prevent client-side errors
+        return JsonResponse([], safe=False)
