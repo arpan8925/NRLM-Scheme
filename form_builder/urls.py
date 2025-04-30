@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, re_path
 from . import views
 
 app_name = 'form_builder'
@@ -23,4 +23,7 @@ urlpatterns = [
     path('api/shgs/', views.fetch_shgs, name='fetch_shgs_user_location'),
     path('api/vos/', views.fetch_vos, name='fetch_vos_user_location'),
     path('api/clfs/', views.fetch_clfs, name='fetch_clfs_user_location'),
+
+    # Proxy API endpoint for external requests
+    re_path(r'^api/proxy/(?P<path>.+)$', views.proxy_api_request, name='proxy_api_request'),
 ]

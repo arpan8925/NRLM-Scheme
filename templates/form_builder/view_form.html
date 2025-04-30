@@ -289,8 +289,21 @@
                         const fieldType = dropdown.getAttribute('data-field-type');
 
                         if (fieldType === 'village_list') {
-                            // Fetch villages using user's location
-                            fetch('/forms/api/villages/', {
+                            // Get user location data from the locationData variable
+                            const stateId = locationData.state_id;
+                            const districtId = locationData.district_id;
+                            const blockId = locationData.block_id;
+
+                            // Format IDs with leading zeros if needed
+                            const formattedStateId = stateId ? String(stateId).padStart(2, '0') : '';
+                            const formattedDistrictId = districtId ? String(districtId).padStart(2, '0') : '';
+                            const formattedBlockId = blockId ? String(blockId).padStart(2, '0') : '';
+
+                            // Use the proxy endpoint to fetch villages
+                            const proxyUrl = `/forms/api/proxy/state/${formattedStateId}/district/${formattedDistrictId}/block/${formattedBlockId}.json`;
+                            console.log('Village proxy URL:', proxyUrl);
+
+                            fetch(proxyUrl, {
                                 credentials: 'same-origin',  // Include cookies for authentication
                                 headers: {
                                     'X-Requested-With': 'XMLHttpRequest',  // Identify as AJAX request
@@ -318,71 +331,167 @@
                                     dropdown.innerHTML = '<option value="">No villages available</option>';
                                 });
                         } else if (fieldType === 'shg_list') {
-                            // Fetch SHGs using user's location
-                            fetch('/forms/api/shgs/', {
-                                credentials: 'same-origin',  // Include cookies for authentication
+                            // Get user location data from the locationData variable
+                            const stateId = locationData.state_id;
+                            const blockId = locationData.block_id;
+
+                            // Format block ID with leading zeros if needed
+                            const formattedBlockId = blockId ? String(blockId).padStart(2, '0') : '';
+
+                            // First get the state short name
+                            fetch('/forms/api/proxy/statemaster.json', {
+                                credentials: 'same-origin',
                                 headers: {
-                                    'X-Requested-With': 'XMLHttpRequest',  // Identify as AJAX request
-                                    'X-CSRFToken': csrftoken  // Include CSRF token
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-CSRFToken': csrftoken
                                 }
                             })
-                                .then(response => {
-                                    if (!response.ok) {
-                                        throw new Error(`HTTP error! Status: ${response.status}`);
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`HTTP error! Status: ${response.status}`);
+                                }
+                                return response.json();
+                            })
+                            .then(states => {
+                                // Find the state with matching ID
+                                const state = states.find(s => s.state_id === parseInt(stateId));
+                                if (!state) {
+                                    throw new Error(`State with ID ${stateId} not found`);
+                                }
+
+                                // Use the proxy endpoint to fetch SHGs
+                                const proxyUrl = `/forms/api/proxy/apisetu/${state.state_short_name_en}/shg/block?block_id=${formattedBlockId}`;
+                                console.log('SHG proxy URL:', proxyUrl);
+
+                                return fetch(proxyUrl, {
+                                    credentials: 'same-origin',
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'X-CSRFToken': csrftoken
                                     }
-                                    return response.json();
-                                })
-                                .then(shgs => {
-                                    populateDropdownWithLowercaseValues(dropdown, shgs, 'shg_name');
-                                })
-                                .catch(error => {
-                                    console.error('Error fetching SHGs:', error);
-                                    dropdown.innerHTML = '<option value="">No SHGs available</option>';
                                 });
+                            })
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`HTTP error! Status: ${response.status}`);
+                                }
+                                return response.json();
+                            })
+                            .then(shgs => {
+                                populateDropdownWithLowercaseValues(dropdown, shgs, 'shg_name');
+                            })
+                            .catch(error => {
+                                console.error('Error fetching SHGs:', error);
+                                dropdown.innerHTML = '<option value="">No SHGs available</option>';
+                            });
                         } else if (fieldType === 'vo_list') {
-                            // Fetch VOs using user's location
-                            fetch('/forms/api/vos/', {
-                                credentials: 'same-origin',  // Include cookies for authentication
+                            // Get user location data from the locationData variable
+                            const stateId = locationData.state_id;
+                            const blockId = locationData.block_id;
+
+                            // Format block ID with leading zeros if needed
+                            const formattedBlockId = blockId ? String(blockId).padStart(2, '0') : '';
+
+                            // First get the state short name
+                            fetch('/forms/api/proxy/statemaster.json', {
+                                credentials: 'same-origin',
                                 headers: {
-                                    'X-Requested-With': 'XMLHttpRequest',  // Identify as AJAX request
-                                    'X-CSRFToken': csrftoken  // Include CSRF token
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-CSRFToken': csrftoken
                                 }
                             })
-                                .then(response => {
-                                    if (!response.ok) {
-                                        throw new Error(`HTTP error! Status: ${response.status}`);
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`HTTP error! Status: ${response.status}`);
+                                }
+                                return response.json();
+                            })
+                            .then(states => {
+                                // Find the state with matching ID
+                                const state = states.find(s => s.state_id === parseInt(stateId));
+                                if (!state) {
+                                    throw new Error(`State with ID ${stateId} not found`);
+                                }
+
+                                // Use the proxy endpoint to fetch VOs
+                                const proxyUrl = `/forms/api/proxy/apisetu/${state.state_short_name_en}/vo/block?block_id=${formattedBlockId}`;
+                                console.log('VO proxy URL:', proxyUrl);
+
+                                return fetch(proxyUrl, {
+                                    credentials: 'same-origin',
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'X-CSRFToken': csrftoken
                                     }
-                                    return response.json();
-                                })
-                                .then(vos => {
-                                    populateDropdownWithLowercaseValues(dropdown, vos, 'vo_name');
-                                })
-                                .catch(error => {
-                                    console.error('Error fetching VOs:', error);
-                                    dropdown.innerHTML = '<option value="">No VOs available</option>';
                                 });
+                            })
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`HTTP error! Status: ${response.status}`);
+                                }
+                                return response.json();
+                            })
+                            .then(vos => {
+                                populateDropdownWithLowercaseValues(dropdown, vos, 'vo_name');
+                            })
+                            .catch(error => {
+                                console.error('Error fetching VOs:', error);
+                                dropdown.innerHTML = '<option value="">No VOs available</option>';
+                            });
                         } else if (fieldType === 'clf_list') {
-                            // Fetch CLFs using user's location
-                            fetch('/forms/api/clfs/', {
-                                credentials: 'same-origin',  // Include cookies for authentication
+                            // Get user location data from the locationData variable
+                            const stateId = locationData.state_id;
+                            const blockId = locationData.block_id;
+
+                            // Format block ID with leading zeros if needed
+                            const formattedBlockId = blockId ? String(blockId).padStart(2, '0') : '';
+
+                            // First get the state short name
+                            fetch('/forms/api/proxy/statemaster.json', {
+                                credentials: 'same-origin',
                                 headers: {
-                                    'X-Requested-With': 'XMLHttpRequest',  // Identify as AJAX request
-                                    'X-CSRFToken': csrftoken  // Include CSRF token
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-CSRFToken': csrftoken
                                 }
                             })
-                                .then(response => {
-                                    if (!response.ok) {
-                                        throw new Error(`HTTP error! Status: ${response.status}`);
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`HTTP error! Status: ${response.status}`);
+                                }
+                                return response.json();
+                            })
+                            .then(states => {
+                                // Find the state with matching ID
+                                const state = states.find(s => s.state_id === parseInt(stateId));
+                                if (!state) {
+                                    throw new Error(`State with ID ${stateId} not found`);
+                                }
+
+                                // Use the proxy endpoint to fetch CLFs
+                                const proxyUrl = `/forms/api/proxy/apisetu/${state.state_short_name_en}/clf/block?block_id=${formattedBlockId}`;
+                                console.log('CLF proxy URL:', proxyUrl);
+
+                                return fetch(proxyUrl, {
+                                    credentials: 'same-origin',
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'X-CSRFToken': csrftoken
                                     }
-                                    return response.json();
-                                })
-                                .then(clfs => {
-                                    populateDropdownWithLowercaseValues(dropdown, clfs, 'clf_name');
-                                })
-                                .catch(error => {
-                                    console.error('Error fetching CLFs:', error);
-                                    dropdown.innerHTML = '<option value="">No CLFs available</option>';
                                 });
+                            })
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`HTTP error! Status: ${response.status}`);
+                                }
+                                return response.json();
+                            })
+                            .then(clfs => {
+                                populateDropdownWithLowercaseValues(dropdown, clfs, 'clf_name');
+                            })
+                            .catch(error => {
+                                console.error('Error fetching CLFs:', error);
+                                dropdown.innerHTML = '<option value="">No CLFs available</option>';
+                            });
                         }
                     });
                 })

@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from .models import Form, FormSubmission, FileUpload
 from django.utils import timezone
 import json
@@ -10,8 +10,77 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie
+import logging
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 # Create your views here.
+
+@login_required
+def proxy_api_request(request, path):
+    """
+    Proxy requests to external APIs to avoid CORS and IP blocking issues
+    """
+    try:
+        # Base URLs for different APIs
+        cdn_lokos_base_url = 'https://cdn.lokos.in/lokos-masterdata/'
+        apisetu_base_url = 'https://apisetu.gov.in/mord/lokos/srv/v1/'
+
+        # Determine which API to use based on the path
+        if path.startswith('apisetu/'):
+            # Handle API Setu requests
+            actual_path = path.replace('apisetu/', '')
+            base_url = apisetu_base_url
+
+            # Add required headers for API Setu
+            headers = {
+                'X-APISETU-APIKEY': '18034065a7d2f7114df06cd7e6388ce677e536514fccd1e923fef0453ff26cbf',
+                'X-APISETU-CLIENTID': 'in.co.glpc',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        else:
+            # Handle CDN Lokos requests
+            actual_path = path
+            base_url = cdn_lokos_base_url
+
+            # Add a user agent to mimic a browser
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Referer': 'https://nrlm.fliptechy.in/'
+            }
+
+        # Get query parameters from the original request
+        params = request.GET.dict()
+
+        # Log the request details
+        logger.info(f"Proxying request to: {base_url}{actual_path}")
+        logger.info(f"Headers: {headers}")
+        logger.info(f"Params: {params}")
+
+        # Make the request to the external API
+        response = requests.get(f"{base_url}{actual_path}", headers=headers, params=params)
+
+        # Log the response status
+        logger.info(f"Proxy response status: {response.status_code}")
+
+        # Return the response from the external API
+        if response.status_code == 200:
+            try:
+                # Try to parse as JSON
+                data = response.json()
+                return JsonResponse(data, safe=False)
+            except json.JSONDecodeError:
+                # If not JSON, return as text
+                return HttpResponse(response.text, content_type=response.headers.get('Content-Type', 'text/plain'))
+        else:
+            # Log the error response
+            logger.error(f"Proxy error: {response.status_code} - {response.text}")
+            return JsonResponse([], safe=False)
+
+    except Exception as e:
+        logger.exception(f"Proxy exception: {str(e)}")
+        return JsonResponse([], safe=False)
 
 @login_required
 @ensure_csrf_cookie  # Ensure CSRF cookie is set for AJAX requests
