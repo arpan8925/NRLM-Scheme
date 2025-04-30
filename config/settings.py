@@ -39,6 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # Third-party apps
+    'corsheaders',
+
     # Custom apps
     'accounts.apps.AccountsConfig',
     'managerdashboard.apps.ManagerdashboardConfig',
@@ -51,6 +54,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # CORS middleware - must be before CommonMiddleware
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -144,3 +148,39 @@ AUTH_USER_MODEL = 'accounts.User'
 
 # Authentication settings
 LOGIN_URL = '/login/'
+
+# CORS settings
+CORS_ALLOW_ALL_ORIGINS = True  # For development only, set to False in production
+CORS_ALLOW_CREDENTIALS = True  # Allow cookies to be sent with requests
+
+# Specific origins that are allowed to make cross-origin requests
+CORS_ALLOWED_ORIGINS = [
+    "https://nrlm.fliptechy.in",
+    "https://cdn.lokos.in",
+    "https://apisetu.gov.in",
+]
+
+# Allow specific HTTP methods
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+]
+
+# Allow specific HTTP headers
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+    "x-apisetu-apikey",
+    "x-apisetu-clientid",
+]

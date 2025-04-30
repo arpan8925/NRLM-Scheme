@@ -249,12 +249,31 @@
         // Initialize dynamic dropdowns
         const dynamicDropdowns = document.querySelectorAll('.dynamic-dropdown');
 
+        // Get CSRF token from cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrftoken = getCookie('csrftoken');
+
         if (dynamicDropdowns.length > 0) {
             // Fetch user location data
             fetch('/forms/api/user-location/', {
                 credentials: 'same-origin',  // Include cookies for authentication
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'  // Identify as AJAX request
+                    'X-Requested-With': 'XMLHttpRequest',  // Identify as AJAX request
+                    'X-CSRFToken': csrftoken  // Include CSRF token
                 }
             })
                 .then(response => {
@@ -271,7 +290,13 @@
 
                         if (fieldType === 'village_list') {
                             // Fetch villages using user's location
-                            fetch('/forms/api/villages/')
+                            fetch('/forms/api/villages/', {
+                                credentials: 'same-origin',  // Include cookies for authentication
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',  // Identify as AJAX request
+                                    'X-CSRFToken': csrftoken  // Include CSRF token
+                                }
+                            })
                                 .then(response => {
                                     if (!response.ok) {
                                         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -294,7 +319,13 @@
                                 });
                         } else if (fieldType === 'shg_list') {
                             // Fetch SHGs using user's location
-                            fetch('/forms/api/shgs/')
+                            fetch('/forms/api/shgs/', {
+                                credentials: 'same-origin',  // Include cookies for authentication
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',  // Identify as AJAX request
+                                    'X-CSRFToken': csrftoken  // Include CSRF token
+                                }
+                            })
                                 .then(response => {
                                     if (!response.ok) {
                                         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -310,7 +341,13 @@
                                 });
                         } else if (fieldType === 'vo_list') {
                             // Fetch VOs using user's location
-                            fetch('/forms/api/vos/')
+                            fetch('/forms/api/vos/', {
+                                credentials: 'same-origin',  // Include cookies for authentication
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',  // Identify as AJAX request
+                                    'X-CSRFToken': csrftoken  // Include CSRF token
+                                }
+                            })
                                 .then(response => {
                                     if (!response.ok) {
                                         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -326,7 +363,13 @@
                                 });
                         } else if (fieldType === 'clf_list') {
                             // Fetch CLFs using user's location
-                            fetch('/forms/api/clfs/')
+                            fetch('/forms/api/clfs/', {
+                                credentials: 'same-origin',  // Include cookies for authentication
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',  // Identify as AJAX request
+                                    'X-CSRFToken': csrftoken  // Include CSRF token
+                                }
+                            })
                                 .then(response => {
                                     if (!response.ok) {
                                         throw new Error(`HTTP error! Status: ${response.status}`);

@@ -9,10 +9,12 @@ import requests
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 # Create your views here.
 
 @login_required
+@ensure_csrf_cookie  # Ensure CSRF cookie is set for AJAX requests
 def view_form(request, slug):
     form = get_object_or_404(Form, slug=slug, is_published=True)
     form_fields = json.loads(form.fields) if form.fields else []
@@ -90,14 +92,13 @@ def preview_form(request):
 
 # API endpoints for dynamic form fields
 
+@ensure_csrf_cookie
+@login_required
 def get_user_location_data(request):
     """
     Get the current user's state, district, and block information
     """
     user = request.user
-
-    if not user.is_authenticated:
-        return JsonResponse({'error': 'User not authenticated'}, status=401)
 
     # Return the user's location data
     location_data = {
