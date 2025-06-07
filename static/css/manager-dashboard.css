@@ -1,5 +1,5 @@
 :root {
-    --primary-color: #4f46e5;
+    --primary-color:red;
     --primary-dark: #4338ca;
     --text-primary: #ffffff;
     --text-secondary: #9ca3af;
@@ -16,7 +16,9 @@
     --warning-color: #F59E0B;
     --info-color: #3B82F6;
     --sidebar-width: 260px;
+    
 }
+
 
 #formCanvas {
     position: relative; /* Ensure it's a valid drop target */
@@ -42,12 +44,13 @@ body {
 /* Sidebar Styles */
 .sidebar {
     width: var(--sidebar-width);
-    background-color: var(--background-darker);
+    background-color:white;
     padding: 2rem 1rem;
-    border-right: 1px solid var(--border-color);
+    border-right: 1px solid black;
     position: fixed;
     height: 100vh;
     overflow-y: auto;
+    border-width : 5px;
 }
 
 .main-with-sidebar {
@@ -60,7 +63,7 @@ body {
 } */
 
 .sidebar-header h2 {
-    color: var(--primary-color);
+    color: gray;
     font-size: 1.5rem;
     margin-bottom: 2rem;
     padding: 0 1rem;
@@ -71,7 +74,7 @@ body {
 }
 
 .sidebar-header h2 svg {
-    color: var(--accent-color);
+    color: gray;
 }
 
 .sidebar-nav ul {
@@ -115,6 +118,7 @@ body {
     flex: 1;
     padding: 2rem;
     overflow-x: hidden;
+    background-color:light gray;
 }
 
 .top-bar {
@@ -134,7 +138,7 @@ body {
 }
 
 .welcome-text p {
-    color: var(--text-secondary);
+    color:white;
 }
 
 .user-menu {
@@ -176,7 +180,7 @@ body {
 }
 
 .logout-btn:hover {
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    box-shadow: 0 4px 12px white;
     transform: translateY(-1px);
 }
 
@@ -215,7 +219,7 @@ body {
 }
 
 .stat-card h3 {
-    color: var(--text-secondary);
+    color: white;
     font-size: 0.875rem;
     margin-bottom: 0.75rem;
     text-transform: uppercase;
@@ -229,7 +233,7 @@ body {
     color: var(--text-primary);
     margin-bottom: 0.5rem;
     background: linear-gradient(90deg, var(--text-primary), var(--primary-light));
-    -webkit-background-clip: text;
+    
     -webkit-text-fill-color: transparent;
 }
 
@@ -250,15 +254,15 @@ body {
 
 /* Recent Activity */
 .recent-activity {
-    background: linear-gradient(145deg, var(--card-background), var(--background-lighter));
+    
     padding: 1.75rem;
     border-radius: 1rem;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--border-color);
+    border: 1px solid white;
 }
 
 .recent-activity h2 {
-    color: var(--text-primary);
+    color: white;
     font-size: 1.25rem;
     margin-bottom: 1.5rem;
     font-weight: 600;
@@ -272,10 +276,10 @@ body {
 }
 
 .no-activity {
-    color: var(--text-secondary);
+    color: white;
     text-align: center;
     padding: 2rem;
-    background-color: var(--background-lighter);
+    background-color: gray;
     border-radius: 0.75rem;
     font-size: 0.938rem;
 }
