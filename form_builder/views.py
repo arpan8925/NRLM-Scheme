@@ -35,7 +35,7 @@ def proxy_api_request(request, path):
 
             # Add required headers for API Setu
             headers = {
-                'X-APISETU-APIKEY': '18034065a7d2f7114df06cd7e6388ce677e536514fccd1e923fef0453ff26cbf',
+                'X-APISETU-APIKEY': 'f1bd94ec67aa6c7a47a1442ee8e79fe6002dcef7ebf3e02b2b0cfab346e0e5ad',
                 'X-APISETU-CLIENTID': 'in.co.glpc',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
@@ -343,7 +343,7 @@ def fetch_shgs(request, state_code=None, block_id=None):
 
         # Make request to the SHG API with required headers
         headers = {
-            'X-APISETU-APIKEY': '18034065a7d2f7114df06cd7e6388ce677e536514fccd1e923fef0453ff26cbf',
+            'X-APISETU-APIKEY': 'f1bd94ec67aa6c7a47a1442ee8e79fe6002dcef7ebf3e02b2b0cfab346e0e5ad',
             'X-APISETU-CLIENTID': 'in.co.glpc'
         }
 
@@ -409,7 +409,7 @@ def fetch_vos(request, state_code=None, block_id=None):
 
         # Make request to the VO API with required headers
         headers = {
-            'X-APISETU-APIKEY': '18034065a7d2f7114df06cd7e6388ce677e536514fccd1e923fef0453ff26cbf',
+            'X-APISETU-APIKEY': 'f1bd94ec67aa6c7a47a1442ee8e79fe6002dcef7ebf3e02b2b0cfab346e0e5ad',
             'X-APISETU-CLIENTID': 'in.co.glpc'
         }
 
@@ -475,7 +475,7 @@ def fetch_clfs(request, state_code=None, block_id=None):
 
         # Make request to the CLF API with required headers
         headers = {
-            'X-APISETU-APIKEY': '18034065a7d2f7114df06cd7e6388ce677e536514fccd1e923fef0453ff26cbf',
+            'X-APISETU-APIKEY': 'f1bd94ec67aa6c7a47a1442ee8e79fe6002dcef7ebf3e02b2b0cfab346e0e5ad',
             'X-APISETU-CLIENTID': 'in.co.glpc'
         }
 
